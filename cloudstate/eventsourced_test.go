@@ -34,6 +34,14 @@ type TestEntity struct {
 	EventEmitter
 }
 
+func (te *TestEntity) Snapshot() (snapshot interface{}, err error) {
+	panic("implement me")
+}
+
+func (te *TestEntity) HandleSnapshot(snapshot interface{}) (handled bool, err error) {
+	panic("implement me")
+}
+
 func (te *TestEntity) IncrementBy(n int64) (int64, error) {
 	te.Value += n
 	return te.Value, nil
@@ -169,7 +177,7 @@ func newHandler(t *testing.T) *EventSourcedHandler {
 		Entity:        (*TestEntity)(nil),
 		ServiceName:   "TestEventSourcedHandler-Service",
 		SnapshotEvery: 0,
-		once:          sync.Once{},
+		registerOnce:  sync.Once{},
 	}
 	err := entity.initZeroValue()
 	if err != nil {
@@ -220,11 +228,11 @@ func TestErrSend(t *testing.T) {
 func TestEventSourcedHandlerHandlesCommandAndEvents(t *testing.T) {
 	handler := newHandler(t)
 	if testEntity.Value >= 0 {
-		t.Errorf("testEntity.Value should be <0 but was not: %+v", testEntity)
+		t.Fatalf("testEntity.Value should be <0 but was not: %+v", testEntity)
 	}
 	initHandler(handler, t)
 	if testEntity.Value != 0 {
-		t.Errorf("testEntity.Value should be 0 but was not: %+v", testEntity)
+		t.Fatalf("testEntity.Value should be 0 but was not: %+v", testEntity)
 	}
 	incrementedTo := int64(7)
 	incrCmdValue, err := marshal(&IncrementByCommand{Amount: incrementedTo}, t)
@@ -239,15 +247,15 @@ func TestEventSourcedHandlerHandlesCommandAndEvents(t *testing.T) {
 	}
 	err = handler.handleCommand(&incrCommand, TestEventSourcedHandleServer{})
 	if err != nil {
-		t.Errorf("%v", err)
+		t.Fatalf("%v", err)
 	}
 	if testEntity.Value != incrementedTo {
-		t.Errorf("testEntity.Value != incrementedTo")
+		t.Fatalf("testEntity.Value: (%v) != incrementedTo: (%v)", testEntity.Value, incrementedTo)
 	}
 
 	decrCmdValue, err := proto.Marshal(&DecrementByCommand{Amount: incrementedTo})
 	if err != nil {
-		t.Errorf("%v", err)
+		t.Fatalf("%v", err)
 	}
 	decrCommand := protocol.Command{
 		EntityId: "entity-0",
@@ -260,10 +268,10 @@ func TestEventSourcedHandlerHandlesCommandAndEvents(t *testing.T) {
 	}
 	err = handler.handleCommand(&decrCommand, TestEventSourcedHandleServer{})
 	if err != nil {
-		t.Errorf("%v", err)
+		t.Fatalf("%v", err)
 	}
 	if testEntity.Value != 0 {
-		t.Errorf("testEntity.Value != 0")
+		t.Fatalf("testEntity.Value != 0")
 	}
 }
 

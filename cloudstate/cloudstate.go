@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	SupportLibraryVersion = "0.4.4"
+	SupportLibraryVersion = "0.1.0"
 	SupportLibraryName    = "cloudstate-go-support"
 )
 
@@ -85,7 +85,7 @@ func (dc DescriptorConfig) AddDomainDescriptor(filename string) DescriptorConfig
 
 // Register registers an event sourced entity for CloudState.
 func (cs *CloudState) Register(ese *EventSourcedEntity, config DescriptorConfig) (err error) {
-	ese.once.Do(func() {
+	ese.registerOnce.Do(func() {
 		if err = ese.initZeroValue(); err != nil {
 			return
 		}
@@ -172,7 +172,7 @@ func (r *EntityDiscoveryResponder) Discover(c context.Context, pi *protocol.Prox
 	return r.entitySpec, nil
 }
 
-// ReportError logs
+// ReportError logs any user function error reported by the CloudState proxy.
 func (r *EntityDiscoveryResponder) ReportError(c context.Context, fe *protocol.UserFunctionError) (*empty.Empty, error) {
 	log.Printf("ReportError: %v\n", fe)
 	return &empty.Empty{}, nil
@@ -227,7 +227,6 @@ func (r *EntityDiscoveryResponder) registerEntity(e *EventSourcedEntity, config 
 		ServiceName:   e.ServiceName,
 		PersistenceId: persistenceID,
 	})
-	// TODO: e.SnapshotEvery
 	return r.updateSpec()
 }
 

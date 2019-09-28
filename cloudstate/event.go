@@ -48,8 +48,8 @@ type eventEmitter struct {
 	subscriptions []*Subscription
 }
 
-// Emit will immediately invoke the associated event handler for that event -
-// this both validates that the event can be applied to the current state, as well as
+// Emit will immediately invoke the associated event handler for that event.
+// This both validates that the event can be applied to the current state, as well as
 // updates the state so that subsequent processing in the command handler can use it.
 func (e *eventEmitter) Emit(event interface{}) {
 	for _, subs := range e.subscriptions {
@@ -63,6 +63,7 @@ func (e *eventEmitter) Emit(event interface{}) {
 		}
 		if err != nil && subs.OnErr != nil {
 			subs.OnErr(err)
+			// TODO: we have no context here to fail to the proxy
 		}
 	}
 	e.events = append(e.events, event)

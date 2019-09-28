@@ -54,6 +54,37 @@ func TestMultipleSubscribers(t *testing.T) {
 	}
 }
 
+func TestUnsubscribe(t *testing.T) {
+	e := AnEntity{EventEmitter: NewEmitter()}
+	n := int64(0)
+	sub1 := &Subscription{
+		OnNext: func(event interface{}) error {
+			atomic.AddInt64(&n, 1)
+			return nil
+		},
+	}
+	e.Subscribe(sub1)
+	e.Emit(1)
+	if n != 1 {
+		t.Fail()
+	}
+	e.Emit(1)
+	if n != 2 {
+		t.Fail()
+	}
+	e.Subscribe(&Subscription{
+		OnNext: func(event interface{}) error {
+			atomic.AddInt64(&n, 1)
+			return nil
+		},
+	})
+	sub1.Unsubscribe()
+	e.Emit(1)
+	if n != 3 {
+		t.Fail()
+	}
+}
+
 func TestEventEmitter(t *testing.T) {
 	e := AnEntity{EventEmitter: NewEmitter()}
 	s := make([]string, 0)
