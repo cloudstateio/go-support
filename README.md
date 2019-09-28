@@ -1,2 +1,2 @@
 # go-support
-GoLang support for [CloudState](https://github.com/cloudstateio/cloudstate)
+Go support for [CloudState](https://github.com/cloudstateio/cloudstate)
