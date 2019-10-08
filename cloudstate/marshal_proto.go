@@ -21,7 +21,7 @@ import (
 	"github.com/golang/protobuf/ptypes/any"
 )
 
-// marshalAny marshals a proto.Message to a any.Any value
+// marshalAny marshals a proto.Message to a any.Any value.
 func marshalAny(pb interface{}) (*any.Any, error) {
 	// TODO: protobufs are expected here, but CloudState supports other formats
 	message, ok := pb.(proto.Message)

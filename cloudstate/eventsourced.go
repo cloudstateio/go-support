@@ -228,7 +228,7 @@ func (esh *EventSourcedHandler) handleInitSnapshot(init *protocol.EventSourcedIn
 		return nil
 	}
 	entityId := init.GetEntityId()
-	if snapShotHandler, ok := esh.contexts[entityId].EntityInstance.Instance.(SnapshotHandler); ok {
+	if snapshotHandler, ok := esh.contexts[entityId].EntityInstance.Instance.(SnapshotHandler); ok {
 		msgName := strings.TrimPrefix(init.Snapshot.Snapshot.GetTypeUrl(), protoAnyBase+"/") // TODO: this might be something else than a proto message
 		messageType := proto.MessageType(msgName)
 		if messageType.Kind() == reflect.Ptr {
@@ -237,7 +237,7 @@ func (esh *EventSourcedHandler) handleInitSnapshot(init *protocol.EventSourcedIn
 				if err != nil {
 					return NewFailureError("unmarshalling snapshot failed with: %v", err)
 				}
-				handled, err := snapShotHandler.HandleSnapshot(message)
+				handled, err := snapshotHandler.HandleSnapshot(message)
 				if err != nil {
 					return NewFailureError("handling snapshot failed with: %v", err)
 				}
@@ -302,7 +302,6 @@ func (esh *EventSourcedHandler) handleEvent(entityId string, event *protocol.Eve
 // Beside calling the service method, we have to collect "events" the service might emit.
 // These events afterwards have to be handled by a EventHandler to update the state of the
 // entity. The CloudState proxy can re-play these events at any time
-// TODO: move sendFailure to the caller
 func (esh *EventSourcedHandler) handleCommand(cmd *protocol.Command, server protocol.EventSourced_HandleServer) error {
 	// method to call
 	method, err := esh.methodToCall(cmd)
@@ -486,6 +485,7 @@ func (EventSourcedHandler) handleEvents(entityInstance *EntityInstance, events .
 		// TODO: here's the point where events can be protobufs, serialized as json or other formats
 		msgName := strings.TrimPrefix(event.Payload.GetTypeUrl(), protoAnyBase+"/")
 		messageType := proto.MessageType(msgName)
+
 		if messageType.Kind() == reflect.Ptr {
 			// get a zero-ed message of this type
 			if message, ok := reflect.New(messageType.Elem()).Interface().(proto.Message); ok {
@@ -500,7 +500,7 @@ func (EventSourcedHandler) handleEvents(entityInstance *EntityInstance, events .
 					if implementsEventHandler {
 						handled, err = eventHandler.HandleEvent(message)
 						if err != nil {
-							return err
+							return err // FIXME/TODO: is this correct? if we fail here, nothing is safe afterwards.
 						}
 					}
 					// if not, we try to find one
@@ -510,8 +510,8 @@ func (EventSourcedHandler) handleEvents(entityInstance *EntityInstance, events .
 						// find a concrete handling method
 						entityValue := reflect.ValueOf(entityInstance.Instance)
 						entityType := entityValue.Type()
-						for tmi := 0; tmi < entityType.NumMethod(); tmi++ {
-							method := entityType.Method(tmi)
+						for n := 0; n < entityType.NumMethod(); n++ {
+							method := entityType.Method(n)
 							// we expect one argument for now, the domain message
 							// the first argument is the receiver itself
 							if method.Func.Type().NumIn() == 2 {
@@ -520,7 +520,7 @@ func (EventSourcedHandler) handleEvents(entityInstance *EntityInstance, events .
 									entityValue.MethodByName(method.Name).Call([]reflect.Value{reflect.ValueOf(message)})
 								}
 							} else {
-								// we have not found a one-argument method maching the
+								// we have not found a one-argument method matching the events type as an argument
 								// TODO: what to do here? we might support more variations of possible handlers we can detect
 							}
 						}

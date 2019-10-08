@@ -70,14 +70,16 @@ func (te *TestEntity) New() interface{} {
 	return testEntity
 }
 
-func (te *TestEntity) IncrementByCommand(c context.Context, ibc *IncrementByCommand) (*empty.Empty, error) {
+// IncrementByCommand with value receiver
+func (te TestEntity) IncrementByCommand(_ context.Context, ibc *IncrementByCommand) (*empty.Empty, error) {
 	te.Emit(&IncrementByEvent{
 		Value: ibc.Amount,
 	})
 	return &empty.Empty{}, nil
 }
 
-func (te *TestEntity) DecrementByCommand(c context.Context, ibc *DecrementByCommand) (*empty.Empty, error) {
+// DecrementByCommand with pointer receiver
+func (te *TestEntity) DecrementByCommand(_ context.Context, ibc *DecrementByCommand) (*empty.Empty, error) {
 	te.Emit(&DecrementByEvent{
 		Value: ibc.Amount,
 	})

@@ -30,17 +30,18 @@ var ErrClientActionFailure = errors.New("cloudstate client action failure")
 
 func NewFailureError(format string, a ...interface{}) error {
 	if len(a) != 0 {
-		errorf := fmt.Errorf(fmt.Sprintf(format, a)+". %w", ErrFailure)
-		return errorf
+		return fmt.Errorf(fmt.Sprintf(format, a...)+". %w", ErrFailure)
 	} else {
-		errorf := fmt.Errorf(format+". %w", ErrFailure)
-		return errorf
+		return fmt.Errorf(format+". %w", ErrFailure)
 	}
 }
 
 func NewClientActionFailureError(format string, a ...interface{}) error {
-	errorf := fmt.Errorf(fmt.Sprintf(format, a)+". %w", ErrClientActionFailure)
-	return errorf
+	if len(a) != 0 {
+		return fmt.Errorf(fmt.Sprintf(format, a...)+". %w", ErrClientActionFailure)
+	} else {
+		return fmt.Errorf(format+". %w", ErrClientActionFailure)
+	}
 }
 
 type ProtocolFailure struct {
@@ -67,8 +68,8 @@ func NewProtocolFailure(failure protocol.Failure) error {
 // be sent to the proxy, otherwise handleFailure returns the original failure
 func handleFailure(failure error, server protocol.EventSourced_HandleServer, cmdId int64) error {
 	if errors.Is(failure, ErrFailure) {
-		// TCK says: Failure was not received, or not well-formed: Failure(Failure(0,cloudstate failure)) was not reply (CloudStateTCK.scala:339)
 		// FIXME: why not getting the failure from the ProtocolFailure
+		// TCK says: Failure was not received, or not well-formed: Failure(Failure(0,cloudstate failure)) was not reply (CloudStateTCK.scala:339)
 		//return sendFailure(&protocol.Failure{Description: failure.Error()}, server)
 		return sendClientActionFailure(&protocol.Failure{
 			CommandId:   cmdId,
