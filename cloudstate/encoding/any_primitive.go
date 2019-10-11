@@ -16,11 +16,9 @@
 package encoding
 
 import (
-	"encoding/json"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 	"math"
-	"reflect"
 )
 
 const (
@@ -80,19 +78,6 @@ func MarshalPrimitive(i interface{}) (*any.Any, error) {
 		_ = buffer.EncodeVarint(fieldKey | proto.WireBytes)
 		if err := buffer.EncodeRawBytes(val); err != nil {
 			return nil, err
-		}
-	case interface{}:
-		typeOf := reflect.TypeOf(val)
-		if typeOf.Kind() == reflect.Struct {
-			typeUrl = jsonTypeURLPrefix + "/" + typeOf.PkgPath() + "." + typeOf.Name()
-			_ = buffer.EncodeVarint(fieldKey | proto.WireBytes)
-			bytes, err := json.Marshal(val)
-			if err != nil {
-				return nil, err
-			}
-			_ = buffer.EncodeRawBytes(bytes)
-		} else {
-			return nil, ErrNotMarshalled
 		}
 	default:
 		return nil, ErrNotMarshalled
