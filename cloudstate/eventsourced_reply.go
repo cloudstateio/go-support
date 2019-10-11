@@ -85,6 +85,7 @@ func handleFailure(failure error, server protocol.EventSourced_HandleServer, cmd
 	return failure
 }
 
+// sendEventSourcedReply sends a given EventSourcedReply and if it fails, handles the error wrapping
 func sendEventSourcedReply(reply *protocol.EventSourcedReply, server protocol.EventSourced_HandleServer) error {
 	err := server.Send(&protocol.EventSourcedStreamOut{
 		Message: &protocol.EventSourcedStreamOut_Reply{
@@ -97,6 +98,7 @@ func sendEventSourcedReply(reply *protocol.EventSourcedReply, server protocol.Ev
 	return err
 }
 
+// sendFailure sends a given EventSourcedReply and if it fails, handles the error wrapping
 func sendFailure(failure *protocol.Failure, server protocol.EventSourced_HandleServer) error {
 	err := server.Send(&protocol.EventSourcedStreamOut{
 		Message: &protocol.EventSourcedStreamOut_Failure{
@@ -109,6 +111,7 @@ func sendFailure(failure *protocol.Failure, server protocol.EventSourced_HandleS
 	return err
 }
 
+// sendClientActionFailure sends a given EventSourcedReply and if it fails, handles the error wrapping
 func sendClientActionFailure(failure *protocol.Failure, server protocol.EventSourced_HandleServer) error {
 	err := server.Send(&protocol.EventSourcedStreamOut{
 		Message: &protocol.EventSourcedStreamOut_Reply{

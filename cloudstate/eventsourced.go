@@ -19,10 +19,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudstateio/go-support/cloudstate/encoding"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 	"io"
+	"net/url"
 	"reflect"
 	"strings"
 	"sync"
@@ -229,25 +231,53 @@ func (esh *EventSourcedHandler) handleInitSnapshot(init *protocol.EventSourcedIn
 	}
 	entityId := init.GetEntityId()
 	if snapshotHandler, ok := esh.contexts[entityId].EntityInstance.Instance.(SnapshotHandler); ok {
+		snapshot, err := esh.unmarshalSnapshot(init)
+		if snapshot == nil || err != nil {
+			return NewFailureError("handling snapshot failed with: %v", err)
+		}
+		handled, err := snapshotHandler.HandleSnapshot(snapshot)
+		if err != nil {
+			return NewFailureError("handling snapshot failed with: %v", err)
+		}
+		if handled {
+			esh.contexts[entityId].EntityInstance.eventSequence = init.GetSnapshot().SnapshotSequence
+		}
+		return nil
+	}
+	return nil
+}
+
+func (EventSourcedHandler) unmarshalSnapshot(init *protocol.EventSourcedInit) (interface{}, error) {
+	// see: https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any#typeurl
+	typeUrl := init.Snapshot.Snapshot.GetTypeUrl()
+	if !strings.Contains(typeUrl, "://") {
+		typeUrl = "https://" + typeUrl
+	}
+	typeURL, err := url.Parse(typeUrl)
+	if err != nil {
+		return nil, err
+	}
+	switch typeURL.Host {
+	case encoding.PrimitiveTypeURLPrefix:
+		snapshot, err := encoding.UnmarshalPrimitive(init.Snapshot.Snapshot)
+		if err != nil {
+			return nil, fmt.Errorf("unmarshalling snapshot failed with: %v", err)
+		}
+		return snapshot, nil
+	case protoAnyBase:
 		msgName := strings.TrimPrefix(init.Snapshot.Snapshot.GetTypeUrl(), protoAnyBase+"/") // TODO: this might be something else than a proto message
 		messageType := proto.MessageType(msgName)
 		if messageType.Kind() == reflect.Ptr {
 			if message, ok := reflect.New(messageType.Elem()).Interface().(proto.Message); ok {
 				err := proto.Unmarshal(init.Snapshot.Snapshot.Value, message)
 				if err != nil {
-					return NewFailureError("unmarshalling snapshot failed with: %v", err)
+					return nil, fmt.Errorf("unmarshalling snapshot failed with: %v", err)
 				}
-				handled, err := snapshotHandler.HandleSnapshot(message)
-				if err != nil {
-					return NewFailureError("handling snapshot failed with: %v", err)
-				}
-				if handled {
-					esh.contexts[entityId].EntityInstance.eventSequence = init.GetSnapshot().SnapshotSequence
-				}
+				return message, nil
 			}
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("unmarshalling snapshot failed with: no snapshot unmarshaller found for: %v", typeURL.String())
 }
 
 func (esh *EventSourcedHandler) subscribeEvents(instance *EntityInstance) {
@@ -325,7 +355,7 @@ func (esh *EventSourcedHandler) handleCommand(cmd *protocol.Command, server prot
 	// The gRPC implementation returns the rpc return method
 	// and an error as a second return value.
 	errReturned := called[1]
-	if errReturned.CanInterface() && errReturned.Interface() != nil && errReturned.Type().Name() == "error" { // FIXME: looks ugly
+	if errReturned.CanInterface() && errReturned.Interface() != nil && errReturned.Type().Name() == "error" {
 		// TCK says: TODO Expects entity.Failure, but gets lientAction.Action.Failure(Failure(commandId, msg)))
 		return NewProtocolFailure(protocol.Failure{
 			CommandId:   cmd.GetId(),
@@ -337,7 +367,7 @@ func (esh *EventSourcedHandler) handleCommand(cmd *protocol.Command, server prot
 	if err != nil { // this should never happen
 		return NewProtocolFailure(protocol.Failure{
 			CommandId:   cmd.GetId(),
-			Description: fmt.Errorf("called return value at index 0 is no proto.Message").Error(),
+			Description: fmt.Errorf("called return value at index 0 is no proto.Message. %w", err).Error(),
 		})
 	}
 	// emitted events

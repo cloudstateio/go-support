@@ -24,15 +24,15 @@ import (
 )
 
 const (
-	primitiveTypeURLPrefix = "p.cloudstate.io"
+	PrimitiveTypeURLPrefix = "p.cloudstate.io"
 
-	primitiveTypeURLPrefixInt32  = primitiveTypeURLPrefix + "/int32"
-	primitiveTypeURLPrefixInt64  = primitiveTypeURLPrefix + "/int64"
-	primitiveTypeURLPrefixString = primitiveTypeURLPrefix + "/string"
-	primitiveTypeURLPrefixFloat  = primitiveTypeURLPrefix + "/float"
-	primitiveTypeURLPrefixDouble = primitiveTypeURLPrefix + "/double"
-	primitiveTypeURLPrefixBool   = primitiveTypeURLPrefix + "/bool"
-	primitiveTypeURLPrefixBytes  = primitiveTypeURLPrefix + "/bytes"
+	primitiveTypeURLPrefixInt32  = PrimitiveTypeURLPrefix + "/int32"
+	primitiveTypeURLPrefixInt64  = PrimitiveTypeURLPrefix + "/int64"
+	primitiveTypeURLPrefixString = PrimitiveTypeURLPrefix + "/string"
+	primitiveTypeURLPrefixFloat  = PrimitiveTypeURLPrefix + "/float"
+	primitiveTypeURLPrefixDouble = PrimitiveTypeURLPrefix + "/double"
+	primitiveTypeURLPrefixBool   = PrimitiveTypeURLPrefix + "/bool"
+	primitiveTypeURLPrefixBytes  = PrimitiveTypeURLPrefix + "/bytes"
 )
 
 const fieldKey = 1 << 3

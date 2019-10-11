@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudstateio/go-support/cloudstate/encoding"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
@@ -34,12 +35,26 @@ type TestEntity struct {
 	EventEmitter
 }
 
+func (inc TestEntity) String() string {
+	return proto.CompactTextString(inc)
+}
+
+func (inc TestEntity) ProtoMessage() {
+}
+
+func (inc TestEntity) Reset() {
+}
+
 func (te *TestEntity) Snapshot() (snapshot interface{}, err error) {
-	panic("implement me")
+	return encoding.MarshalPrimitive(te.Value)
 }
 
 func (te *TestEntity) HandleSnapshot(snapshot interface{}) (handled bool, err error) {
-	panic("implement me")
+	switch v := snapshot.(type) {
+	case int64:
+		te.Value = v
+	}
+	return true, nil
 }
 
 func (te *TestEntity) IncrementBy(n int64) (int64, error) {
@@ -214,6 +229,7 @@ func marshal(msg proto.Message, t *testing.T) ([]byte, error) {
 func TestMain(m *testing.M) {
 	proto.RegisterType((*IncrementByEvent)(nil), "IncrementByEvent")
 	proto.RegisterType((*DecrementByEvent)(nil), "DecrementByEvent")
+	proto.RegisterType((*TestEntity)(nil), "TestEntity")
 	resetTestEntity()
 	defer resetTestEntity()
 	os.Exit(m.Run())
@@ -226,8 +242,34 @@ func TestErrSend(t *testing.T) {
 		t.Fatalf("err1 is no err0 but should")
 	}
 }
+func TestSnapshot(t *testing.T) {
+	resetTestEntity()
+	handler := newHandler(t)
+	if testEntity.Value >= 0 {
+		t.Fatalf("testEntity.Value should be <0 but was not: %+v", testEntity)
+	}
+	primitive, err := encoding.MarshalPrimitive(int64(987))
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	err = handler.handleInit(&protocol.EventSourcedInit{
+		ServiceName: "TestEventSourcedHandler-Service",
+		EntityId:    "entity-0",
+		Snapshot: &protocol.EventSourcedSnapshot{
+			SnapshotSequence: 0,
+			Snapshot:         primitive,
+		},
+	}, nil)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	if testEntity.Value != 987 {
+		t.Fatalf("testEntity.Value should be 0 but was not: %+v", testEntity)
+	}
+}
 
 func TestEventSourcedHandlerHandlesCommandAndEvents(t *testing.T) {
+	resetTestEntity()
 	handler := newHandler(t)
 	if testEntity.Value >= 0 {
 		t.Fatalf("testEntity.Value should be <0 but was not: %+v", testEntity)
