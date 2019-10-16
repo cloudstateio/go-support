@@ -20,21 +20,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+
 	"github.com/cloudstateio/go-support/cloudstate"
 	"github.com/cloudstateio/go-support/tck/shoppingcart"
 	domain "github.com/cloudstateio/go-support/tck/shoppingcart/persistence"
 	"github.com/golang/protobuf/ptypes/empty"
-	"log"
 )
 
 // main creates a CloudState instance and registers the ShoppingCart
 // as a event sourced entity.
 func main() {
-	cloudState := cloudstate.NewCloudState(&cloudstate.Options{
+	cloudState, err := cloudstate.New(cloudstate.Options{
 		ServiceName:    "shopping-cart",
 		ServiceVersion: "0.1.0",
 	})
-	err := cloudState.Register(
+	if err != nil {
+		log.Fatalf("CloudState.New failed: %v", err)
+	}
+	err = cloudState.RegisterEventSourcedEntity(
 		&cloudstate.EventSourcedEntity{
 			Entity:      (*ShoppingCart)(nil),
 			ServiceName: "com.example.shoppingcart.ShoppingCart",
@@ -43,6 +47,7 @@ func main() {
 			Service: "shoppingcart/shoppingcart.proto",
 		}.AddDomainDescriptor("domain.proto"),
 	)
+
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %v", err)
 	}

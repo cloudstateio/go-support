@@ -19,16 +19,17 @@ package cloudstate
 import (
 	"bytes"
 	"context"
-	"github.com/cloudstateio/go-support/cloudstate/protocol"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	"log"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/cloudstateio/go-support/cloudstate/protocol"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 )
 
 func TestNewCloudState(t *testing.T) {
-	cloudState := NewCloudState(&Options{})
+	cloudState, _ := New(Options{})
 	si := cloudState.server.GetServiceInfo()
 	if si == nil {
 		t.Fail()
@@ -36,7 +37,7 @@ func TestNewCloudState(t *testing.T) {
 }
 
 func TestEntityDiscoveryResponderDiscover(t *testing.T) {
-	responder := NewEntityDiscoveryResponder(&Options{
+	responder := newEntityDiscoveryResponder(Options{
 		ServiceName:    "service.one",
 		ServiceVersion: "0.0.1",
 	})
@@ -78,7 +79,7 @@ func captureOutput(f func()) string {
 }
 
 func TestEntityDiscoveryResponderReportError(t *testing.T) {
-	responder := NewEntityDiscoveryResponder(&Options{
+	responder := newEntityDiscoveryResponder(Options{
 		ServiceName:    "service.one",
 		ServiceVersion: "0.0.1",
 	})
