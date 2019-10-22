@@ -188,11 +188,11 @@ func (t TestEventSourcedHandleServer) Recv() (*protocol.EventSourcedStreamIn, er
 	return nil, nil
 }
 
-func newHandler(t *testing.T) *EventSourcedHandler {
-	handler := NewEventSourcedHandler()
+func newHandler(t *testing.T) *EventSourcedServer {
+	handler := newEventSourcedServer()
 	entity := EventSourcedEntity{
 		Entity:        (*TestEntity)(nil),
-		ServiceName:   "TestEventSourcedHandler-Service",
+		ServiceName:   "TestEventSourcedServer-Service",
 		SnapshotEvery: 0,
 		registerOnce:  sync.Once{},
 	}
@@ -207,9 +207,9 @@ func newHandler(t *testing.T) *EventSourcedHandler {
 	return handler
 }
 
-func initHandler(handler *EventSourcedHandler, t *testing.T) {
+func initHandler(handler *EventSourcedServer, t *testing.T) {
 	err := handler.handleInit(&protocol.EventSourcedInit{
-		ServiceName: "TestEventSourcedHandler-Service",
+		ServiceName: "TestEventSourcedServer-Service",
 		EntityId:    "entity-0",
 	}, nil)
 	if err != nil {
@@ -253,7 +253,7 @@ func TestSnapshot(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 	err = handler.handleInit(&protocol.EventSourcedInit{
-		ServiceName: "TestEventSourcedHandler-Service",
+		ServiceName: "TestEventSourcedServer-Service",
 		EntityId:    "entity-0",
 		Snapshot: &protocol.EventSourcedSnapshot{
 			SnapshotSequence: 0,
@@ -268,7 +268,7 @@ func TestSnapshot(t *testing.T) {
 	}
 }
 
-func TestEventSourcedHandlerHandlesCommandAndEvents(t *testing.T) {
+func TestEventSourcedServerHandlesCommandAndEvents(t *testing.T) {
 	resetTestEntity()
 	handler := newHandler(t)
 	if testEntity.Value >= 0 {

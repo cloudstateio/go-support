@@ -125,8 +125,8 @@ func (c EntityInstanceContext) ServiceName() string {
 	return c.EntityInstance.EventSourcedEntity.ServiceName
 }
 
-// EventSourcedHandler is the implementation of the EventSourcedHandler server API for EventSourced service.
-type EventSourcedHandler struct {
+// EventSourcedServer is the implementation of the EventSourcedServer server API for EventSourced service.
+type EventSourcedServer struct {
 	// entities are indexed by their service name
 	entities map[string]*EventSourcedEntity
 	// contexts are entity instance contexts indexed by their entity ids
@@ -135,22 +135,22 @@ type EventSourcedHandler struct {
 	cmdMethodCache map[string]reflect.Method
 }
 
-// NewEventSourcedHandler returns an initialized EventSourcedHandler
-func NewEventSourcedHandler() *EventSourcedHandler {
-	return &EventSourcedHandler{
+// newEventSourcedServer returns an initialized EventSourcedServer
+func newEventSourcedServer() *EventSourcedServer {
+	return &EventSourcedServer{
 		entities:       make(map[string]*EventSourcedEntity),
 		contexts:       make(map[string]*EntityInstanceContext),
 		cmdMethodCache: make(map[string]reflect.Method),
 	}
 }
 
-func (esh *EventSourcedHandler) registerEntity(ese *EventSourcedEntity) error {
+func (esh *EventSourcedServer) registerEntity(ese *EventSourcedEntity) error {
 	esh.entities[ese.ServiceName] = ese
 	return nil
 }
 
 // Handle
-// from EventSourcedServer.Handle
+//
 // The stream. One stream will be established per active entity.
 // Once established, the first message sent will be Init, which contains the entity ID, and,
 // if the entity has previously persisted a snapshot, it will contain that snapshot. It will
@@ -161,14 +161,14 @@ func (esh *EventSourcedHandler) registerEntity(ese *EventSourcedEntity) error {
 // message. The entity should reply in order, and any events that the entity requests to be
 // persisted the entity should handle itself, applying them to its own state, as if they had
 // arrived as events when the event stream was being replayed on load.
-func (esh *EventSourcedHandler) Handle(server protocol.EventSourced_HandleServer) error {
+func (esh *EventSourcedServer) Handle(stream protocol.EventSourced_HandleServer) error {
 	var entityId string
 	var failed error
 	for {
 		if failed != nil {
 			return failed
 		}
-		msg, recvErr := server.Recv()
+		msg, recvErr := stream.Recv()
 		if recvErr == io.EOF {
 			return nil
 		}
@@ -176,22 +176,22 @@ func (esh *EventSourcedHandler) Handle(server protocol.EventSourced_HandleServer
 			return recvErr
 		}
 		if cmd := msg.GetCommand(); cmd != nil {
-			if err := esh.handleCommand(cmd, server); err != nil {
+			if err := esh.handleCommand(cmd, stream); err != nil {
 				// TODO: in general, what happens with the stream here if an error happens?
-				failed = handleFailure(err, server, cmd.GetId())
+				failed = handleFailure(err, stream, cmd.GetId())
 			}
 			continue
 		}
 		if event := msg.GetEvent(); event != nil {
 			// TODO spec: Why does command carry the entityId and an event not?
 			if err := esh.handleEvent(entityId, event); err != nil {
-				failed = handleFailure(err, server, 0)
+				failed = handleFailure(err, stream, 0)
 			}
 			continue
 		}
 		if init := msg.GetInit(); init != nil {
-			if err := esh.handleInit(init, server); err != nil {
-				failed = handleFailure(err, server, 0)
+			if err := esh.handleInit(init, stream); err != nil {
+				failed = handleFailure(err, stream, 0)
 			}
 			entityId = init.GetEntityId()
 			continue
@@ -199,7 +199,7 @@ func (esh *EventSourcedHandler) Handle(server protocol.EventSourced_HandleServer
 	}
 }
 
-func (esh *EventSourcedHandler) handleInit(init *protocol.EventSourcedInit, server protocol.EventSourced_HandleServer) error {
+func (esh *EventSourcedServer) handleInit(init *protocol.EventSourcedInit, server protocol.EventSourced_HandleServer) error {
 	eid := init.GetEntityId()
 	if _, present := esh.contexts[eid]; present {
 		return NewFailureError("unable to server.Send")
@@ -225,7 +225,7 @@ func (esh *EventSourcedHandler) handleInit(init *protocol.EventSourcedInit, serv
 	return nil
 }
 
-func (esh *EventSourcedHandler) handleInitSnapshot(init *protocol.EventSourcedInit) error {
+func (esh *EventSourcedServer) handleInitSnapshot(init *protocol.EventSourcedInit) error {
 	if init.Snapshot == nil {
 		return nil
 	}
@@ -247,7 +247,7 @@ func (esh *EventSourcedHandler) handleInitSnapshot(init *protocol.EventSourcedIn
 	return nil
 }
 
-func (EventSourcedHandler) unmarshalSnapshot(init *protocol.EventSourcedInit) (interface{}, error) {
+func (EventSourcedServer) unmarshalSnapshot(init *protocol.EventSourcedInit) (interface{}, error) {
 	// see: https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any#typeurl
 	typeUrl := init.Snapshot.Snapshot.GetTypeUrl()
 	if !strings.Contains(typeUrl, "://") {
@@ -280,7 +280,7 @@ func (EventSourcedHandler) unmarshalSnapshot(init *protocol.EventSourcedInit) (i
 	return nil, fmt.Errorf("unmarshalling snapshot failed with: no snapshot unmarshaller found for: %v", typeURL.String())
 }
 
-func (esh *EventSourcedHandler) subscribeEvents(instance *EntityInstance) {
+func (esh *EventSourcedServer) subscribeEvents(instance *EntityInstance) {
 	if emitter, ok := instance.Instance.(EventEmitter); ok {
 		emitter.Subscribe(&Subscription{
 			OnNext: func(event interface{}) error {
@@ -296,7 +296,7 @@ func (esh *EventSourcedHandler) subscribeEvents(instance *EntityInstance) {
 	}
 }
 
-func (esh *EventSourcedHandler) handleEvent(entityId string, event *protocol.EventSourcedEvent) error {
+func (esh *EventSourcedServer) handleEvent(entityId string, event *protocol.EventSourcedEvent) error {
 	if entityId == "" {
 		return NewFailureError("no entityId was found from a previous init message for event sequence: %v", event.Sequence)
 	}
@@ -332,7 +332,7 @@ func (esh *EventSourcedHandler) handleEvent(entityId string, event *protocol.Eve
 // Beside calling the service method, we have to collect "events" the service might emit.
 // These events afterwards have to be handled by a EventHandler to update the state of the
 // entity. The CloudState proxy can re-play these events at any time
-func (esh *EventSourcedHandler) handleCommand(cmd *protocol.Command, server protocol.EventSourced_HandleServer) error {
+func (esh *EventSourcedServer) handleCommand(cmd *protocol.Command, server protocol.EventSourced_HandleServer) error {
 	// method to call
 	method, err := esh.methodToCall(cmd)
 	if err != nil {
@@ -400,7 +400,7 @@ func (esh *EventSourcedHandler) handleCommand(cmd *protocol.Command, server prot
 	}, server)
 }
 
-func (*EventSourcedHandler) buildInputs(entityContext *EntityInstanceContext, method reflect.Method, cmd *protocol.Command, ctx context.Context) ([]reflect.Value, error) {
+func (*EventSourcedServer) buildInputs(entityContext *EntityInstanceContext, method reflect.Method, cmd *protocol.Command, ctx context.Context) ([]reflect.Value, error) {
 	inputs := make([]reflect.Value, method.Type.NumIn())
 	inputs[0] = reflect.ValueOf(entityContext.EntityInstance.Instance)
 	inputs[1] = reflect.ValueOf(ctx)
@@ -424,7 +424,7 @@ func (*EventSourcedHandler) buildInputs(entityContext *EntityInstanceContext, me
 	return inputs, nil
 }
 
-func (esh *EventSourcedHandler) methodToCall(cmd *protocol.Command) (reflect.Method, error) {
+func (esh *EventSourcedServer) methodToCall(cmd *protocol.Command) (reflect.Method, error) {
 	entityContext := esh.contexts[cmd.GetEntityId()]
 	cacheKey := entityContext.ServiceName() + cmd.Name
 	method, hit := esh.cmdMethodCache[cacheKey]
@@ -464,7 +464,7 @@ func (esh *EventSourcedHandler) methodToCall(cmd *protocol.Command) (reflect.Met
 	return method, nil
 }
 
-func (*EventSourcedHandler) handleSnapshots(entityContext *EntityInstanceContext) (*any.Any, error) {
+func (*EventSourcedServer) handleSnapshots(entityContext *EntityInstanceContext) (*any.Any, error) {
 	if !entityContext.EntityInstance.shouldSnapshot() {
 		return nil, nil
 	}
@@ -494,7 +494,7 @@ func checkUnary(methodByName reflect.Value) error {
 }
 
 // applyEvent applies an event to a local entity
-func (esh EventSourcedHandler) applyEvent(entityInstance *EntityInstance, event interface{}) error {
+func (esh EventSourcedServer) applyEvent(entityInstance *EntityInstance, event interface{}) error {
 	payload, err := marshalAny(event)
 	if err != nil {
 		return err
@@ -509,7 +509,7 @@ func (esh EventSourcedHandler) applyEvent(entityInstance *EntityInstance, event 
 // and snapshots is to use protobufs. CloudState will automatically detect if
 // an emitted event is a protobuf, and serialize it as such. For other
 // serialization options, including JSON, see Serialization.
-func (EventSourcedHandler) handleEvents(entityInstance *EntityInstance, events ...*protocol.EventSourcedEvent) error {
+func (EventSourcedServer) handleEvents(entityInstance *EntityInstance, events ...*protocol.EventSourcedEvent) error {
 	eventHandler, implementsEventHandler := entityInstance.Instance.(EventHandler)
 	for _, event := range events {
 		// TODO: here's the point where events can be protobufs, serialized as json or other formats

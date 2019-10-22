@@ -39,22 +39,20 @@ const (
 
 // CloudState is an instance of a CloudState User Function
 type CloudState struct {
-	server                   *grpc.Server
-	entityDiscoveryResponder *EntityDiscoveryService
-	eventSourcedHandler      *EventSourcedHandler
+	server                *grpc.Server
+	entityDiscoveryServer *EntityDiscoveryServer
+	eventSourcedServer    *EventSourcedServer
 }
 
 // New returns a new CloudState instance.
 func New(options Options) (*CloudState, error) {
 	cs := &CloudState{
-		server:                   grpc.NewServer(),
-		entityDiscoveryResponder: newEntityDiscoveryResponder(options),
-		eventSourcedHandler:      NewEventSourcedHandler(),
+		server:                grpc.NewServer(),
+		entityDiscoveryServer: newEntityDiscoveryResponder(options),
+		eventSourcedServer:    newEventSourcedServer(),
 	}
-	protocol.RegisterEntityDiscoveryServer(cs.server, cs.entityDiscoveryResponder)
-	log.Println("RegisterEntityDiscoveryServer")
-	protocol.RegisterEventSourcedServer(cs.server, cs.eventSourcedHandler)
-	log.Println("RegisterEventSourcedServer")
+	protocol.RegisterEntityDiscoveryServer(cs.server, cs.entityDiscoveryServer)
+	protocol.RegisterEventSourcedServer(cs.server, cs.eventSourcedServer)
 	return cs, nil
 }
 
@@ -88,10 +86,10 @@ func (cs *CloudState) RegisterEventSourcedEntity(ese *EventSourcedEntity, config
 		if err = ese.initZeroValue(); err != nil {
 			return
 		}
-		if err = cs.eventSourcedHandler.registerEntity(ese); err != nil {
+		if err = cs.eventSourcedServer.registerEntity(ese); err != nil {
 			return
 		}
-		if err = cs.entityDiscoveryResponder.registerEntity(ese, config); err != nil {
+		if err = cs.entityDiscoveryServer.registerEntity(ese, config); err != nil {
 			return
 		}
 	})
@@ -112,23 +110,22 @@ func (cs *CloudState) Run() error {
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
-	log.Printf("starting grpcServer at: %s:%s", host, port)
 	if e := cs.server.Serve(lis); e != nil {
 		return fmt.Errorf("failed to grpcServer.Serve for: %v", lis)
 	}
 	return nil
 }
 
-// EntityDiscoveryService implements the CloudState discovery protocol.
-type EntityDiscoveryService struct {
+// EntityDiscoveryServer implements the CloudState discovery protocol.
+type EntityDiscoveryServer struct {
 	fileDescriptorSet *filedescr.FileDescriptorSet
 	entitySpec        *protocol.EntitySpec
 	message           *descriptor.Message
 }
 
-// newEntityDiscoveryResponder returns a new and initialized EntityDiscoveryService.
-func newEntityDiscoveryResponder(options Options) *EntityDiscoveryService {
-	responder := &EntityDiscoveryService{}
+// newEntityDiscoveryResponder returns a new and initialized EntityDiscoveryServer.
+func newEntityDiscoveryResponder(options Options) *EntityDiscoveryServer {
+	responder := &EntityDiscoveryServer{}
 	responder.entitySpec = &protocol.EntitySpec{
 		Entities: make([]*protocol.Entity, 0),
 		ServiceInfo: &protocol.ServiceInfo{
@@ -146,7 +143,7 @@ func newEntityDiscoveryResponder(options Options) *EntityDiscoveryService {
 }
 
 // Discover returns an entity spec for
-func (r *EntityDiscoveryService) Discover(c context.Context, pi *protocol.ProxyInfo) (*protocol.EntitySpec, error) {
+func (r *EntityDiscoveryServer) Discover(c context.Context, pi *protocol.ProxyInfo) (*protocol.EntitySpec, error) {
 	log.Printf("Received discovery call from sidecar [%s w%s] supporting CloudState %v.%v\n",
 		pi.ProxyName,
 		pi.ProxyVersion,
@@ -172,12 +169,12 @@ func (r *EntityDiscoveryService) Discover(c context.Context, pi *protocol.ProxyI
 }
 
 // ReportError logs any user function error reported by the CloudState proxy.
-func (r *EntityDiscoveryService) ReportError(c context.Context, fe *protocol.UserFunctionError) (*empty.Empty, error) {
+func (r *EntityDiscoveryServer) ReportError(c context.Context, fe *protocol.UserFunctionError) (*empty.Empty, error) {
 	log.Printf("ReportError: %v\n", fe)
 	return &empty.Empty{}, nil
 }
 
-func (r *EntityDiscoveryService) updateSpec() (err error) {
+func (r *EntityDiscoveryServer) updateSpec() (err error) {
 	protoBytes, err := proto.Marshal(r.fileDescriptorSet)
 	if err != nil {
 		return errors.New("unable to Marshal FileDescriptorSet")
@@ -186,7 +183,7 @@ func (r *EntityDiscoveryService) updateSpec() (err error) {
 	return nil
 }
 
-func (r *EntityDiscoveryService) resolveFileDescriptors(dc DescriptorConfig) error {
+func (r *EntityDiscoveryServer) resolveFileDescriptors(dc DescriptorConfig) error {
 	// service
 	if dc.Service != "" {
 		if err := r.registerFileDescriptorProto(dc.Service); err != nil {
@@ -213,7 +210,7 @@ func (r *EntityDiscoveryService) resolveFileDescriptors(dc DescriptorConfig) err
 	return nil
 }
 
-func (r *EntityDiscoveryService) registerEntity(e *EventSourcedEntity, config DescriptorConfig) error {
+func (r *EntityDiscoveryServer) registerEntity(e *EventSourcedEntity, config DescriptorConfig) error {
 	if err := r.resolveFileDescriptors(config); err != nil {
 		return fmt.Errorf("failed to resolveFileDescriptor for DescriptorConfig: %+v: %w", config, err)
 	}
@@ -229,7 +226,7 @@ func (r *EntityDiscoveryService) registerEntity(e *EventSourcedEntity, config De
 	return r.updateSpec()
 }
 
-func (r *EntityDiscoveryService) registerFileDescriptorProto(filename string) error {
+func (r *EntityDiscoveryServer) registerFileDescriptorProto(filename string) error {
 	descriptorProto, err := unpackFile(proto.FileDescriptor(filename))
 	if err != nil {
 		return fmt.Errorf("failed to registerFileDescriptorProto for filename: %s: %w", filename, err)
@@ -238,7 +235,7 @@ func (r *EntityDiscoveryService) registerFileDescriptorProto(filename string) er
 	return r.updateSpec()
 }
 
-func (r *EntityDiscoveryService) registerFileDescriptor(msg descriptor.Message) error {
+func (r *EntityDiscoveryServer) registerFileDescriptor(msg descriptor.Message) error {
 	fd, _ := descriptor.ForMessage(msg) // this can panic
 	if r := recover(); r != nil {
 		return fmt.Errorf("descriptor.ForMessage panicked (%v) for: %+v", r, msg)
