@@ -311,7 +311,7 @@ func (esh *EventSourcedServer) handleEvent(entityId string, event *protocol.Even
 	return err
 }
 
-// handleCommand handles a command received from the CloudState proxy.
+// handleCommand handles a command received from the Cloudstate proxy.
 //
 // TODO: remove these following lines of comment
 // "Unary RPCs where the client sends a single request to the server and
@@ -326,12 +326,12 @@ func (esh *EventSourcedServer) handleEvent(entityId string, event *protocol.Even
 // - a streamed flag, (TODO: for what?)
 //
 // together, these properties allow to call a method of the entities registered service and
-// return its response as a reply to the CloudState proxy.
+// return its response as a reply to the Cloudstate proxy.
 //
 // Events:
 // Beside calling the service method, we have to collect "events" the service might emit.
 // These events afterwards have to be handled by a EventHandler to update the state of the
-// entity. The CloudState proxy can re-play these events at any time
+// entity. The Cloudstate proxy can re-play these events at any time
 func (esh *EventSourcedServer) handleCommand(cmd *protocol.Command, server protocol.EventSourced_HandleServer) error {
 	// method to call
 	method, err := esh.methodToCall(cmd)
@@ -506,7 +506,7 @@ func (esh EventSourcedServer) applyEvent(entityInstance *EntityInstance, event i
 //
 // Event sourced entities persist events and snapshots, and these need to be
 // serialized when persisted. The most straight forward way to persist events
-// and snapshots is to use protobufs. CloudState will automatically detect if
+// and snapshots is to use protobufs. Cloudstate will automatically detect if
 // an emitted event is a protobuf, and serialize it as such. For other
 // serialization options, including JSON, see Serialization.
 func (EventSourcedServer) handleEvents(entityInstance *EntityInstance, events ...*protocol.EventSourcedEvent) error {

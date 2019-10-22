@@ -116,7 +116,7 @@ func (cs *CloudState) Run() error {
 	return nil
 }
 
-// EntityDiscoveryServer implements the CloudState discovery protocol.
+// EntityDiscoveryServer implements the Cloudstate discovery protocol.
 type EntityDiscoveryServer struct {
 	fileDescriptorSet *filedescr.FileDescriptorSet
 	entitySpec        *protocol.EntitySpec
@@ -144,7 +144,7 @@ func newEntityDiscoveryResponder(options Options) *EntityDiscoveryServer {
 
 // Discover returns an entity spec for
 func (r *EntityDiscoveryServer) Discover(c context.Context, pi *protocol.ProxyInfo) (*protocol.EntitySpec, error) {
-	log.Printf("Received discovery call from sidecar [%s w%s] supporting CloudState %v.%v\n",
+	log.Printf("Received discovery call from sidecar [%s w%s] supporting Cloudstate %v.%v\n",
 		pi.ProxyName,
 		pi.ProxyVersion,
 		pi.ProtocolMajorVersion,
@@ -168,7 +168,7 @@ func (r *EntityDiscoveryServer) Discover(c context.Context, pi *protocol.ProxyIn
 	return r.entitySpec, nil
 }
 
-// ReportError logs any user function error reported by the CloudState proxy.
+// ReportError logs any user function error reported by the Cloudstate proxy.
 func (r *EntityDiscoveryServer) ReportError(c context.Context, fe *protocol.UserFunctionError) (*empty.Empty, error) {
 	log.Printf("ReportError: %v\n", fe)
 	return &empty.Empty{}, nil
