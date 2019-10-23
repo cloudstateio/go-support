@@ -40,8 +40,9 @@ func main() {
 	}
 	err = cloudState.RegisterEventSourcedEntity(
 		&cloudstate.EventSourcedEntity{
-			EntityFunc:  NewShoppingCart,
-			ServiceName: "com.example.shoppingcart.ShoppingCart",
+			EntityFunc:    NewShoppingCart,
+			ServiceName:   "com.example.shoppingcart.ShoppingCart",
+			PersistenceID: "ShoppingCart",
 		},
 		cloudstate.DescriptorConfig{
 			Service: "shoppingcart/shoppingcart.proto",
@@ -100,7 +101,7 @@ func (sc *ShoppingCart) ItemRemoved(removed *domain.ItemRemoved) error {
 //
 // returns handle set to true if we have handled the event
 // and any error that happened during the handling
-func (sc *ShoppingCart) HandleEvent(event interface{}) (handled bool, err error) {
+func (sc *ShoppingCart) HandleEvent(_ context.Context, event interface{}) (handled bool, err error) {
 	switch e := event.(type) {
 	case *domain.ItemAdded:
 		return true, sc.ItemAdded(e)
@@ -147,19 +148,20 @@ func (sc *ShoppingCart) GetCart(_ context.Context, _ *shoppingcart.GetShoppingCa
 	return cart, nil
 }
 
-func (sc *ShoppingCart) HandleCommand(command interface{}) (handled bool, reply interface{}, err error) {
-	handled = true
+func (sc *ShoppingCart) HandleCommand(ctx context.Context, command interface{}) (handled bool, reply interface{}, err error) {
 	switch cmd := command.(type) {
 	case *shoppingcart.GetShoppingCart:
-		reply, err = sc.GetCart(context.TODO(), cmd)
+		reply, err := sc.GetCart(ctx, cmd)
+		return true, reply, err
 	case *shoppingcart.RemoveLineItem:
-		reply, err = sc.RemoveItem(nil, cmd)
+		reply, err := sc.RemoveItem(ctx, cmd)
+		return true, reply, err
 	case *shoppingcart.AddLineItem:
-		reply, err = sc.AddItem(nil, cmd)
+		reply, err := sc.AddItem(ctx, cmd)
+		return true, reply, err
 	default:
-		handled = false
+		return false, reply, err
 	}
-	return
 }
 
 func (sc *ShoppingCart) Snapshot() (snapshot interface{}, err error) {

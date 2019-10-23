@@ -37,7 +37,7 @@ func TestNewCloudState(t *testing.T) {
 }
 
 func TestEntityDiscoveryResponderDiscover(t *testing.T) {
-	responder := newEntityDiscoveryResponder(Options{
+	server, _ := newEntityDiscoveryServer(Options{
 		ServiceName:    "service.one",
 		ServiceVersion: "0.0.1",
 	})
@@ -48,7 +48,7 @@ func TestEntityDiscoveryResponderDiscover(t *testing.T) {
 		ProxyVersion:         "9.8.7",
 		SupportedEntityTypes: nil,
 	}
-	spec, err := responder.Discover(context.Background(), info)
+	spec, err := server.Discover(context.Background(), info)
 	if err != nil {
 		t.Errorf("responder.Discover returned err: %v", err)
 	}
@@ -79,12 +79,12 @@ func captureOutput(f func()) string {
 }
 
 func TestEntityDiscoveryResponderReportError(t *testing.T) {
-	responder := newEntityDiscoveryResponder(Options{
+	server, _ := newEntityDiscoveryServer(Options{
 		ServiceName:    "service.one",
 		ServiceVersion: "0.0.1",
 	})
 	output := captureOutput(func() {
-		empty, err := responder.ReportError(context.Background(), &protocol.UserFunctionError{
+		empty, err := server.ReportError(context.Background(), &protocol.UserFunctionError{
 			Message: "unable to do XYZ",
 		})
 		if err != nil || empty == nil {

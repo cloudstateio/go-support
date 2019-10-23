@@ -16,6 +16,7 @@
 package cloudstate
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
@@ -41,14 +42,14 @@ const snapshotEveryDefault = 100
 // It is used to be registered as an event sourced entity on a CloudState instance.
 type EventSourcedEntity struct {
 	// ServiceName is the fully qualified name of the service that implements this entities interface.
-	// Setting it is optional.
+	// Setting it is mandatory.
 	ServiceName string
 	// PersistenceID is used to namespace events in the journal, useful for
 	// when you share the same database between multiple entities. It defaults to
 	// the simple name for the entity type.
 	// It’s good practice to select one explicitly, this means your database
 	// isn’t depend on type names in your code.
-	// Setting it is optional.
+	// Setting it is mandatory.
 	PersistenceID string
 	// The snapshotEvery parameter controls how often snapshots are taken,
 	// so that the entity doesn't need to be recovered from the whole journal
@@ -60,14 +61,12 @@ type EventSourcedEntity struct {
 	EntityFunc func() Entity
 
 	// internal
-	entityName   string
 	registerOnce sync.Once
 }
 
 // init get its Entity type and Zero-Value it to
 // something we can use as an initializer.
 func (e *EventSourcedEntity) init() error {
-	e.entityName = reflect.TypeOf(e.EntityFunc()).Name()
 	e.SnapshotEvery = snapshotEveryDefault
 	return nil
 }
@@ -324,7 +323,7 @@ func (esh *EventSourcedServer) handleCommand(cmd *protocol.Command, server proto
 			if commandHandler, ok := entityContext.EntityInstance.Instance.(CommandHandler); ok {
 				// The gRPC implementation returns the rpc return method
 				// and an error as a second return value.
-				_, reply, errReturned := commandHandler.HandleCommand(message)
+				_, reply, errReturned := commandHandler.HandleCommand(server.Context(), message)
 				// the error
 				if errReturned != nil {
 					// TCK says: TODO Expects entity.Failure, but gets lientAction.Action.Failure(Failure(commandId, msg)))
@@ -424,69 +423,9 @@ func (EventSourcedServer) handleEvents(entityInstance *EntityInstance, events ..
 					// we're ready to handle the proto message
 					// and we might have a handler
 					if implementsEventHandler {
-						_, err = eventHandler.HandleEvent(message)
+						_, err = eventHandler.HandleEvent(context.Background(), message) // TODO: propagate ctx from callee
 						if err != nil {
 							return err // FIXME/TODO: is this correct? if we fail here, nothing is safe afterwards.
-						}
-					}
-				}
-			}
-		} // TODO: what do we do if we haven't handled the events?
-	}
-	return nil
-}
-
-// handleEvents handles a list of events encoded as protobuf Any messages.
-//
-// Event sourced entities persist events and snapshots, and these need to be
-// serialized when persisted. The most straight forward way to persist events
-// and snapshots is to use protobufs. Cloudstate will automatically detect if
-// an emitted event is a protobuf, and serialize it as such. For other
-// serialization options, including JSON, see Serialization.
-func (EventSourcedServer) handleEvents0(entityInstance *EntityInstance, events ...*protocol.EventSourcedEvent) error {
-	eventHandler, implementsEventHandler := entityInstance.Instance.(EventHandler)
-	for _, event := range events {
-		// TODO: here's the point where events can be protobufs, serialized as json or other formats
-		msgName := strings.TrimPrefix(event.Payload.GetTypeUrl(), protoAnyBase+"/")
-		messageType := proto.MessageType(msgName)
-
-		if messageType.Kind() == reflect.Ptr {
-			// get a zero-ed message of this type
-			if message, ok := reflect.New(messageType.Elem()).Interface().(proto.Message); ok {
-				// and marshal onto it what we got as an any.Any onto it
-				err := proto.Unmarshal(event.Payload.Value, message)
-				if err != nil {
-					return fmt.Errorf("%s, %w", err, ErrMarshal)
-				} else {
-					// we're ready to handle the proto message
-					// and we might have a handler
-					handled := false
-					if implementsEventHandler {
-						handled, err = eventHandler.HandleEvent(message)
-						if err != nil {
-							return err // FIXME/TODO: is this correct? if we fail here, nothing is safe afterwards.
-						}
-					}
-					// if not, we try to find one
-					// currently we support a method that has one argument that equals
-					// to the type of the message received.
-					if !handled {
-						// find a concrete handling method
-						entityValue := reflect.ValueOf(entityInstance.Instance)
-						entityType := entityValue.Type()
-						for n := 0; n < entityType.NumMethod(); n++ {
-							method := entityType.Method(n)
-							// we expect one argument for now, the domain message
-							// the first argument is the receiver itself
-							if method.Func.Type().NumIn() == 2 {
-								argumentType := method.Func.Type().In(1)
-								if argumentType.AssignableTo(messageType) {
-									entityValue.MethodByName(method.Name).Call([]reflect.Value{reflect.ValueOf(message)})
-								}
-							} else {
-								// we have not found a one-argument method matching the events type as an argument
-								// TODO: what to do here? we might support more variations of possible handlers we can detect
-							}
 						}
 					}
 				}

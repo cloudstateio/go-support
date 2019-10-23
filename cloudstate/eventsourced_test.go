@@ -36,7 +36,7 @@ type TestEntity struct {
 	EventEmitter
 }
 
-func (inc TestEntity) HandleCommand(command interface{}) (handled bool, reply interface{}, err error) {
+func (inc TestEntity) HandleCommand(_ context.Context, command interface{}) (handled bool, reply interface{}, err error) {
 	switch cmd := command.(type) {
 	case *IncrementByCommand:
 		reply, err := inc.IncrementByCommand(nil, cmd)
@@ -142,7 +142,7 @@ func (te *TestEntity) DecrementByEvent(d *DecrementByEvent) error {
 	return err
 }
 
-func (te *TestEntity) HandleEvent(event interface{}) (handled bool, err error) {
+func (te *TestEntity) HandleEvent(_ context.Context, event interface{}) (handled bool, err error) {
 	switch e := event.(type) {
 	case *IncrementByEvent:
 		_, err := te.IncrementBy(e.Value)
