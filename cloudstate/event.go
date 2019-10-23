@@ -87,6 +87,10 @@ type EventHandler interface {
 	HandleEvent(event interface{}) (handled bool, err error)
 }
 
+type CommandHandler interface {
+	HandleCommand(command interface{}) (handled bool, reply interface{}, err error)
+}
+
 type Snapshotter interface {
 	Snapshot() (snapshot interface{}, err error)
 }

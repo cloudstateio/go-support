@@ -83,7 +83,7 @@ func (dc DescriptorConfig) AddDomainDescriptor(filename string) DescriptorConfig
 // RegisterEventSourcedEntity registers an event sourced entity for CloudState.
 func (cs *CloudState) RegisterEventSourcedEntity(ese *EventSourcedEntity, config DescriptorConfig) (err error) {
 	ese.registerOnce.Do(func() {
-		if err = ese.initZeroValue(); err != nil {
+		if err = ese.init(); err != nil {
 			return
 		}
 		if err = cs.eventSourcedServer.registerEntity(ese); err != nil {
