@@ -31,18 +31,18 @@ import (
 // main creates a CloudState instance and registers the ShoppingCart
 // as a event sourced entity.
 func main() {
-	cloudState, err := cloudstate.New(cloudstate.Options{
+	server, err := cloudstate.New(cloudstate.Options{
 		ServiceName:    "shopping-cart",
 		ServiceVersion: "0.1.0",
 	})
 	if err != nil {
 		log.Fatalf("CloudState.New failed: %v", err)
 	}
-	err = cloudState.RegisterEventSourcedEntity(
+	err = server.RegisterEventSourcedEntity(
 		&cloudstate.EventSourcedEntity{
-			EntityFunc:    NewShoppingCart,
 			ServiceName:   "com.example.shoppingcart.ShoppingCart",
 			PersistenceID: "ShoppingCart",
+			EntityFunc:    NewShoppingCart,
 		},
 		cloudstate.DescriptorConfig{
 			Service: "shoppingcart/shoppingcart.proto",
@@ -52,7 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %v", err)
 	}
-	err = cloudState.Run()
+	err = server.Run()
 	if err != nil {
 		log.Fatalf("CloudState failed to run: %v", err)
 	}

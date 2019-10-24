@@ -145,7 +145,7 @@ func newEntityDiscoveryServer(options Options) (*EntityDiscoveryServer, error) {
 	return svr, nil
 }
 
-// Discover returns an entity spec for
+// Discover returns an entity spec for registered entities.
 func (r *EntityDiscoveryServer) Discover(_ context.Context, pi *protocol.ProxyInfo) (*protocol.EntitySpec, error) {
 	log.Printf("Received discovery call from sidecar [%s w%s] supporting Cloudstate %v.%v\n",
 		pi.ProxyName,
