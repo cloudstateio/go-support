@@ -29,7 +29,7 @@ import (
 )
 
 func TestNewCloudState(t *testing.T) {
-	cloudState, _ := New(Options{})
+	cloudState, _ := New(Config{})
 	si := cloudState.server.GetServiceInfo()
 	if si == nil {
 		t.Fail()
@@ -37,7 +37,7 @@ func TestNewCloudState(t *testing.T) {
 }
 
 func TestEntityDiscoveryResponderDiscover(t *testing.T) {
-	server, _ := newEntityDiscoveryServer(Options{
+	server, _ := newEntityDiscoveryServer(Config{
 		ServiceName:    "service.one",
 		ServiceVersion: "0.0.1",
 	})
@@ -79,7 +79,7 @@ func captureOutput(f func()) string {
 }
 
 func TestEntityDiscoveryResponderReportError(t *testing.T) {
-	server, _ := newEntityDiscoveryServer(Options{
+	server, _ := newEntityDiscoveryServer(Config{
 		ServiceName:    "service.one",
 		ServiceVersion: "0.0.1",
 	})

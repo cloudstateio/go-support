@@ -45,8 +45,8 @@ type CloudState struct {
 }
 
 // New returns a new CloudState instance.
-func New(options Options) (*CloudState, error) {
-	eds, err := newEntityDiscoveryServer(options)
+func New(config Config) (*CloudState, error) {
+	eds, err := newEntityDiscoveryServer(config)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +60,8 @@ func New(options Options) (*CloudState, error) {
 	return cs, nil
 }
 
-// Options go get a CloudState instance configured.
-type Options struct {
+// Config go get a CloudState instance configured.
+type Config struct {
 	ServiceName    string
 	ServiceVersion string
 }
@@ -127,13 +127,13 @@ type EntityDiscoveryServer struct {
 }
 
 // newEntityDiscoveryServer returns a new and initialized EntityDiscoveryServer.
-func newEntityDiscoveryServer(options Options) (*EntityDiscoveryServer, error) {
+func newEntityDiscoveryServer(config Config) (*EntityDiscoveryServer, error) {
 	svr := &EntityDiscoveryServer{}
 	svr.entitySpec = &protocol.EntitySpec{
 		Entities: make([]*protocol.Entity, 0),
 		ServiceInfo: &protocol.ServiceInfo{
-			ServiceName:           options.ServiceName,
-			ServiceVersion:        options.ServiceVersion,
+			ServiceName:           config.ServiceName,
+			ServiceVersion:        config.ServiceVersion,
 			ServiceRuntime:        fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
 			SupportLibraryName:    SupportLibraryName,
 			SupportLibraryVersion: SupportLibraryVersion,
