@@ -322,6 +322,6 @@ func TestEventSourcedServerHandlesCommandAndEvents(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 	if testEntity.Value != 0 {
-		t.Fatalf("testEntity.Value == 0")
+		t.Fatalf("testEntity.Value != 0")
 	}
 }
