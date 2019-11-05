@@ -31,17 +31,18 @@ import (
 // main creates a CloudState instance and registers the ShoppingCart
 // as a event sourced entity.
 func main() {
-	cloudState, err := cloudstate.New(cloudstate.Options{
+	server, err := cloudstate.New(cloudstate.Config{
 		ServiceName:    "shopping-cart",
 		ServiceVersion: "0.1.0",
 	})
 	if err != nil {
 		log.Fatalf("CloudState.New failed: %v", err)
 	}
-	err = cloudState.RegisterEventSourcedEntity(
+	err = server.RegisterEventSourcedEntity(
 		&cloudstate.EventSourcedEntity{
-			Entity:      (*ShoppingCart)(nil),
-			ServiceName: "com.example.shoppingcart.ShoppingCart",
+			ServiceName:   "com.example.shoppingcart.ShoppingCart",
+			PersistenceID: "ShoppingCart",
+			EntityFunc:    NewShoppingCart,
 		},
 		cloudstate.DescriptorConfig{
 			Service: "shoppingcart/shoppingcart.proto",
@@ -51,7 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %v", err)
 	}
-	err = cloudState.Run()
+	err = server.Run()
 	if err != nil {
 		log.Fatalf("CloudState failed to run: %v", err)
 	}
@@ -65,15 +66,8 @@ type ShoppingCart struct {
 	cloudstate.EventEmitter
 }
 
-// New implements EntityInitializer and returns a new
-// and initialized instance of the ShoppingCart entity.
-func (sc ShoppingCart) New() interface{} {
-	return NewShoppingCart()
-}
-
-// NewShoppingCart returns a new and initialized
-// instance of the ShoppingCart entity.
-func NewShoppingCart() *ShoppingCart {
+// NewShoppingCart returns a new and initialized instance of the ShoppingCart entity.
+func NewShoppingCart() cloudstate.Entity {
 	return &ShoppingCart{
 		cart:         make([]*domain.LineItem, 0),
 		EventEmitter: cloudstate.NewEmitter(), // TODO: the EventEmitter could be provided by the event sourced handler
@@ -107,19 +101,19 @@ func (sc *ShoppingCart) ItemRemoved(removed *domain.ItemRemoved) error {
 //
 // returns handle set to true if we have handled the event
 // and any error that happened during the handling
-func (sc *ShoppingCart) HandleEvent(event interface{}) (handled bool, err error) {
+func (sc *ShoppingCart) HandleEvent(_ context.Context, event interface{}) (handled bool, err error) {
 	switch e := event.(type) {
 	case *domain.ItemAdded:
 		return true, sc.ItemAdded(e)
-	//case *domain.ItemRemoved:
-	//	*domain.ItemRemoved is handled by reflection
+	case *domain.ItemRemoved:
+		return true, sc.ItemRemoved(e)
 	default:
 		return false, nil
 	}
 }
 
 // AddItem implements the AddItem command handling of the shopping cart service.
-func (sc *ShoppingCart) AddItem(c context.Context, li *shoppingcart.AddLineItem) (*empty.Empty, error) {
+func (sc *ShoppingCart) AddItem(_ context.Context, li *shoppingcart.AddLineItem) (*empty.Empty, error) {
 	if li.GetQuantity() <= 0 {
 		return nil, fmt.Errorf("cannot add negative quantity of to item %s", li.GetProductId())
 	}
@@ -133,7 +127,7 @@ func (sc *ShoppingCart) AddItem(c context.Context, li *shoppingcart.AddLineItem)
 }
 
 // RemoveItem implements the RemoveItem command handling of the shopping cart service.
-func (sc *ShoppingCart) RemoveItem(c context.Context, li *shoppingcart.RemoveLineItem) (*empty.Empty, error) {
+func (sc *ShoppingCart) RemoveItem(_ context.Context, li *shoppingcart.RemoveLineItem) (*empty.Empty, error) {
 	if item, _ := sc.find(li.GetProductId()); item == nil {
 		return nil, fmt.Errorf("cannot remove item %s because it is not in the cart", li.GetProductId())
 	}
@@ -142,7 +136,7 @@ func (sc *ShoppingCart) RemoveItem(c context.Context, li *shoppingcart.RemoveLin
 }
 
 // GetCart implements the GetCart command handling of the shopping cart service.
-func (sc *ShoppingCart) GetCart(c context.Context, _ *shoppingcart.GetShoppingCart) (*shoppingcart.Cart, error) {
+func (sc *ShoppingCart) GetCart(_ context.Context, _ *shoppingcart.GetShoppingCart) (*shoppingcart.Cart, error) {
 	cart := &shoppingcart.Cart{}
 	for _, item := range sc.cart {
 		cart.Items = append(cart.Items, &shoppingcart.LineItem{
@@ -152,6 +146,22 @@ func (sc *ShoppingCart) GetCart(c context.Context, _ *shoppingcart.GetShoppingCa
 		})
 	}
 	return cart, nil
+}
+
+func (sc *ShoppingCart) HandleCommand(ctx context.Context, command interface{}) (handled bool, reply interface{}, err error) {
+	switch cmd := command.(type) {
+	case *shoppingcart.GetShoppingCart:
+		reply, err := sc.GetCart(ctx, cmd)
+		return true, reply, err
+	case *shoppingcart.RemoveLineItem:
+		reply, err := sc.RemoveItem(ctx, cmd)
+		return true, reply, err
+	case *shoppingcart.AddLineItem:
+		reply, err := sc.AddItem(ctx, cmd)
+		return true, reply, err
+	default:
+		return false, reply, err
+	}
 }
 
 func (sc *ShoppingCart) Snapshot() (snapshot interface{}, err error) {

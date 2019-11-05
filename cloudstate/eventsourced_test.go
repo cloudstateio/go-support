@@ -19,20 +19,33 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"sync"
+	"testing"
+
 	"github.com/cloudstateio/go-support/cloudstate/encoding"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
-	"os"
-	"sync"
-	"testing"
 )
 
 type TestEntity struct {
 	Value int64
 	EventEmitter
+}
+
+func (inc TestEntity) HandleCommand(_ context.Context, command interface{}) (handled bool, reply interface{}, err error) {
+	switch cmd := command.(type) {
+	case *IncrementByCommand:
+		reply, err := inc.IncrementByCommand(nil, cmd)
+		return true, reply, err
+	case *DecrementByCommand:
+		reply, err := inc.DecrementByCommand(nil, cmd)
+		return true, reply, err
+	}
+	return
 }
 
 func (inc TestEntity) String() string {
@@ -78,11 +91,6 @@ func resetTestEntity() {
 		Value:        -1,
 		EventEmitter: NewEmitter(),
 	}
-}
-
-func (te *TestEntity) New() interface{} {
-	testEntity.Value = 0
-	return testEntity
 }
 
 // IncrementByCommand with value receiver
@@ -134,10 +142,13 @@ func (te *TestEntity) DecrementByEvent(d *DecrementByEvent) error {
 	return err
 }
 
-func (te *TestEntity) HandleEvent(event interface{}) (handled bool, err error) {
+func (te *TestEntity) HandleEvent(_ context.Context, event interface{}) (handled bool, err error) {
 	switch e := event.(type) {
 	case *IncrementByEvent:
 		_, err := te.IncrementBy(e.Value)
+		return true, err
+	case *DecrementByEvent:
+		_, err := te.DecrementBy(e.Value)
 		return true, err
 	default:
 		return false, nil
@@ -191,12 +202,16 @@ func (t TestEventSourcedHandleServer) Recv() (*protocol.EventSourcedStreamIn, er
 func newHandler(t *testing.T) *EventSourcedServer {
 	handler := newEventSourcedServer()
 	entity := EventSourcedEntity{
-		Entity:        (*TestEntity)(nil),
+		EntityFunc: func() Entity {
+			resetTestEntity()
+			testEntity.Value = 0
+			return testEntity
+		},
 		ServiceName:   "TestEventSourcedServer-Service",
 		SnapshotEvery: 0,
 		registerOnce:  sync.Once{},
 	}
-	err := entity.initZeroValue()
+	err := entity.init()
 	if err != nil {
 		t.Errorf("%v", err)
 	}
@@ -211,7 +226,7 @@ func initHandler(handler *EventSourcedServer, t *testing.T) {
 	err := handler.handleInit(&protocol.EventSourcedInit{
 		ServiceName: "TestEventSourcedServer-Service",
 		EntityId:    "entity-0",
-	}, nil)
+	})
 	if err != nil {
 		t.Errorf("%v", err)
 		t.Fail()
@@ -230,7 +245,8 @@ func TestMain(m *testing.M) {
 	proto.RegisterType((*IncrementByEvent)(nil), "IncrementByEvent")
 	proto.RegisterType((*DecrementByEvent)(nil), "DecrementByEvent")
 	proto.RegisterType((*TestEntity)(nil), "TestEntity")
-	resetTestEntity()
+	proto.RegisterType((*IncrementByCommand)(nil), "IncrementByCommand")
+	proto.RegisterType((*DecrementByCommand)(nil), "DecrementByCommand")
 	defer resetTestEntity()
 	os.Exit(m.Run())
 }
@@ -245,9 +261,6 @@ func TestErrSend(t *testing.T) {
 func TestSnapshot(t *testing.T) {
 	resetTestEntity()
 	handler := newHandler(t)
-	if testEntity.Value >= 0 {
-		t.Fatalf("testEntity.Value should be <0 but was not: %+v", testEntity)
-	}
 	primitive, err := encoding.MarshalPrimitive(int64(987))
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -259,7 +272,7 @@ func TestSnapshot(t *testing.T) {
 			SnapshotSequence: 0,
 			Snapshot:         primitive,
 		},
-	}, nil)
+	})
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -271,13 +284,7 @@ func TestSnapshot(t *testing.T) {
 func TestEventSourcedServerHandlesCommandAndEvents(t *testing.T) {
 	resetTestEntity()
 	handler := newHandler(t)
-	if testEntity.Value >= 0 {
-		t.Fatalf("testEntity.Value should be <0 but was not: %+v", testEntity)
-	}
 	initHandler(handler, t)
-	if testEntity.Value != 0 {
-		t.Fatalf("testEntity.Value should be 0 but was not: %+v", testEntity)
-	}
 	incrementedTo := int64(7)
 	incrCmdValue, err := marshal(&IncrementByCommand{Amount: incrementedTo}, t)
 	incrCommand := protocol.Command{
