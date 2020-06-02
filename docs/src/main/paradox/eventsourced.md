@@ -1,6 +1,6 @@
 # Event sourcing
 
-This page documents how to implement Cloudstate event sourced entities in Go. For information on what Cloudstate event sourced entities are, please read the general @extref[Event sourcing](cloudstate:user/features/eventsourced.md) documentation first.
+This page documents how to implement Cloudstate event sourced entities in Go. For information on what Cloudstate event sourced entities are, please read the general @extref[Event sourcing](cloudstate:user/features/eventsourced.html) documentation first.
 
 An event sourced entity can be created by embedding the `cloudstate.EventEmitter` type and also implementing the `cloudstate.Entity` interface.
 
@@ -20,7 +20,7 @@ The `EntityFunc` is a factory method which generates a new Entity whenever Cloud
 
 ## Persistence types and serialization
 
-Event sourced entities persist events and snapshots, and these need to be serialized when persisted. The most straightforward way to persist events and snapshots is to use protobufs. Cloudstate will automatically detect if an emitted event is a protobuf, and serialize it as such. For other serialization options, including JSON, see @extref:[Serialization](cloudstate:serialization.md).
+Event sourced entities persist events and snapshots, and these need to be serialized when persisted. The most straightforward way to persist events and snapshots is to use protobufs. Cloudstate will automatically detect if an emitted event is a protobuf, and serialize it as such. For other serialization options, including JSON, see @extref:[Serialization](cloudstate:developer/language-support/serialization.html).
 
 While protobufs are the recommended format for persisting events, it is recommended that you do not persist your service's protobuf messages, rather, you should create new messages, even if they are identical to the service's. While this may introduce some overhead in needing to convert from one type to the other, the reason for doing this is that it will allow the service's public interface to evolve independently from its data storage format, which should be private.
 
