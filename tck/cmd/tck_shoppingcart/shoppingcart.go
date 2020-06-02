@@ -30,6 +30,7 @@ import (
 
 // main creates a CloudState instance and registers the ShoppingCart
 // as a event sourced entity.
+//#shopping-cart-main
 func main() {
 	server, err := cloudstate.New(cloudstate.Config{
 		ServiceName:    "shopping-cart",
@@ -57,6 +58,8 @@ func main() {
 		log.Fatalf("CloudState failed to run: %v", err)
 	}
 }
+
+//#shopping-cart-main
 
 // A CloudState event sourced entity.
 type ShoppingCart struct {

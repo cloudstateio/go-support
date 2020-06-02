@@ -58,7 +58,9 @@ type EventSourcedEntity struct {
 	SnapshotEvery int64
 
 	// EntityFactory is a factory method which generates a new Entity.
+	//#event-sourced-entity-func
 	EntityFunc func() Entity
+	//#event-sourced-entity-func
 
 	// internal
 	registerOnce sync.Once
