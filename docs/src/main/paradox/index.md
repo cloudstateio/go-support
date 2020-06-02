@@ -1,7 +1,5 @@
 # Cloudstate Go
 
-Link to @extref:[core docs](cloudstate:index.html)
-
 Cloudstate offers an idiomatic Go support library for writing stateful services.
 
 @@toc { depth=1 }
@@ -16,3 +14,5 @@ Cloudstate offers an idiomatic Go support library for writing stateful services.
 * [API docs](api.md)
 
 @@@
+
+Link to @extref:[Cloudstate Documentation](cloudstate:index.html)
