@@ -61,7 +61,7 @@ Now if you place your protobuf files under `protobuf/` and run `protoc --go_out=
 
 Your main package will be responsible for creating the Cloudstate gRPC server, registering the entities for it to serve, and starting it. To do this, you can use the CloudState server type, for example:
 
-@@snip [shoppingcart.go]($root$/../tck/cmd/tck_shoppingcart/shoppingcart.go) { #shopping-cart-main }
+@@snip [shoppingcart.go]($base$/tck/cmd/tck_shoppingcart/shoppingcart.go) { #shopping-cart-main }
 
 We will see more details on registering entities in the coming pages.
 
@@ -73,7 +73,7 @@ To get support for the Cloudstate event emission the Cloudstate entity should em
 
 Second, during registration of the entity, an entity factory function has to be provided so Cloudstate gets to know how to create and initialize an event sourced entity. 
 
-@@snip [shoppingcart.go]($root$/../cloudstate/eventsourced.go) { #event-sourced-entity-func }
+@@snip [shoppingcart.go]($base$/cloudstate/eventsourced.go) { #event-sourced-entity-func }
 
 This entity factory function returns a `cloudstate.Entity` which itself is a composite interface of a `cloudstate.CommandHandler` and a `cloudstate.EventHandler`. Every event sourced entity has to implement these two interfaces.
 

@@ -40,6 +40,7 @@ const snapshotEveryDefault = 100
 
 // EventSourcedEntity captures an Entity, its ServiceName and PersistenceID.
 // It is used to be registered as an event sourced entity on a CloudState instance.
+//#event-sourced-entity-type
 type EventSourcedEntity struct {
 	// ServiceName is the fully qualified name of the service that implements this entities interface.
 	// Setting it is mandatory.
@@ -65,6 +66,8 @@ type EventSourcedEntity struct {
 	// internal
 	registerOnce sync.Once
 }
+
+//#event-sourced-entity-type
 
 // init get its Entity type and Zero-Value it to
 // something we can use as an initializer.

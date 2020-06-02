@@ -86,18 +86,30 @@ func (e *eventEmitter) Clear() {
 	e.events = make([]interface{}, 0)
 }
 
+//#event-handler
 type EventHandler interface {
 	HandleEvent(ctx context.Context, event interface{}) (handled bool, err error)
 }
 
+//#event-handler
+
+//#command-handler
 type CommandHandler interface {
 	HandleCommand(ctx context.Context, command interface{}) (handled bool, reply interface{}, err error)
 }
 
+//#command-handler
+
+//#snapshotter
 type Snapshotter interface {
 	Snapshot() (snapshot interface{}, err error)
 }
 
+//#snapshotter
+
+//#snapshot-handler
 type SnapshotHandler interface {
 	HandleSnapshot(snapshot interface{}) (handled bool, err error)
 }
+
+//#snapshot-handler
