@@ -1,13 +1,31 @@
 language: go
 os:
   - linux
-  - osx
-  - windows
 go:
   - 1.13.x
-before_install:
-  - go get -t -v ./...
-script:
-  - go test -v -race -coverprofile=coverage.txt -covermode=atomic -bench=. ./...
-after_success:
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then bash <(curl -s https://codecov.io/bash); fi
+
+jobs:
+  include:
+    - stage: build
+      before_install:
+        - go get -t -v ./...
+      script:
+        - go test -v -race -coverprofile=coverage.txt -covermode=atomic -bench=. ./...
+      after_success:
+        - if [ "$TRAVIS_OS_NAME" = "linux" ]; then bash <(curl -s https://codecov.io/bash); fi
+
+    - stage: deploy docs
+      name: deploy release docs to cloudstate.io
+      if: tag =~ ^v
+      language: scala
+      script: cd docs && sbt deploy
+    - stage: deploy docs
+      name: deploy snapshot docs to cloudstate.io
+      if: branch = master AND type = push
+      language: scala
+      script: cd docs && sbt deploy
+
+env:
+  global:
+    # encrypted with: travis encrypt --pro -r cloudstateio/go-support DEPLOY_DOCS_TOKEN=<token>
+    secure: "L1uMy3mR5U+0HFmjJwSD6i/av667T187DkzIlRwfTnEGPG6LoZ5EwyGC/IxbKbV2EyUmxt7zDO+OXvsiZx0l0mXZ5ozAKdTB7eb/ujhinwnvB82OtKu8ejvZqI0ooPO+D1RlxqZF5HCX69L0DfTjhytkqLUIlN4CTtSO4ElJ/1Ottg0c3qiNUYvNdFqsKsF7Dq7EJU8G/vZ6o1WCUJzawLshOGDQ9jSL14QnKquFr/cMXHcg3GgiPVl2NFWAld0fOuNpYqUy2X3O7V4/FOJGe+btOao4xQyVsn9V/1VFsqRCyp1uy+kPbQbA0f+fBY3CnDpLKHrhYv8TDdfP9tbUEIhGikc+aqYeGOP6+4vPK/Xi/p2pZEZErPcBfc7CoJECNG4csMjq0GGdhp6UYJO1JPMVrLFZsWLoxPiXTkreQ+Gj4+Jgia20xfcUR/tkZrCQMnkySfFPHK48g2VOadfIZNz6hbdMGrZUarMrWC/hi3DIUdoT0Wn6y5LuP8goAbIBI/+KXvECIdiqTHu7WIwtdesTIZJvHhdp44zec8Teb0Bo6uYoIrKXvfTQbgvTzMzZO8DZ1L21OL7EKD9H6rvFabZXz5I2i9695Q6gkQYmK6Twg6CK1p/aZXmJWN8QXceXPavl3iNvC2fMSFxZvHBuqAjknCQlmTH7/BKyEw5AQ/Q="
