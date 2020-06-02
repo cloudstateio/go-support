@@ -76,5 +76,3 @@ Second, during registration of the entity, an entity factory function has to be 
 @@snip [shoppingcart.go]($base$/cloudstate/eventsourced.go) { #event-sourced-entity-func }
 
 This entity factory function returns a `cloudstate.Entity` which itself is a composite interface of a `cloudstate.CommandHandler` and a `cloudstate.EventHandler`. Every event sourced entity has to implement these two interfaces.
-
-Link to @extref:[event sourcing](cloudstate:user/features/eventsourced.html)
