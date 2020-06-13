@@ -34,7 +34,7 @@ import (
 func main() {
 	server, err := cloudstate.New(cloudstate.Config{
 		ServiceName:    "shopping-cart",
-		ServiceVersion: "0.1.0",
+		ServiceVersion: "0.1.1",
 	})
 	if err != nil {
 		log.Fatalf("CloudState.New failed: %v", err)
