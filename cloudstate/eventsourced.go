@@ -147,6 +147,12 @@ func (esh *EventSourcedServer) registerEntity(ese *EventSourcedEntity) error {
 func (esh *EventSourcedServer) Handle(stream protocol.EventSourced_HandleServer) error {
 	var entityId string
 	var failed error
+
+	// "fix" for https://github.com/cloudstateio/go-support/issues/27
+	// v0.2.x will contain the proper handling for the case of a closed stream.
+	defer func() {
+		delete(esh.contexts, entityId)
+	}()
 	for {
 		if failed != nil {
 			return failed

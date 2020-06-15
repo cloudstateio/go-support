@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	SupportLibraryVersion = "0.1.0"
+	SupportLibraryVersion = "0.1.1"
 	SupportLibraryName    = "cloudstate-go-support"
 )
 
