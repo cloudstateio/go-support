@@ -1,23 +1,19 @@
 # Cloudstate Go documentation
 
-Documentation source for Cloudstate Go, published to https://cloudstate.io/docs/go/current/
+The Cloudstate documentation is built using [Antora](https://antora.org) with Asciidoc sources.
 
-To build the docs with [sbt](https://www.scala-sbt.org):
+The build is defined in the [Makefile](Makefile) and requires `make`, `bash`, and `docker`.
 
-```
-sbt paradox
-```
-
-Can also first start the sbt interactive shell with `sbt`, then run commands.
-
-The documentation can be viewed locally by opening the generated pages:
+To build the documentation run:
 
 ```
-open target/paradox/site/main/index.html
+make
 ```
 
-To watch files for changes and rebuild docs automatically:
+The generated documentation site will be available in the `build/site` directory:
 
 ```
-sbt ~paradox
+open build/site/index.html
 ```
+
+Documentation will be automatically deployed on tagged versions, in the Travis CI builds.

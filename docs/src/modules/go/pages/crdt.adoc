@@ -1,4 +1,4 @@
-# Conflict-free Replicated Data Types
+= Conflict-free Replicated Data Types
 
 * Explain how to use the CRDT API
 * Explain how to use CrdtFactory and where it comes from
