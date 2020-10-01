@@ -1,0 +1,7 @@
+* xref:index.adoc[Implementing in Go]
+** xref:gettingstarted.adoc[Getting started]
+** xref:eventsourced.adoc[Event sourcing]
+** xref:crdt.adoc[Conflict-free Replicated Data Types]
+** xref:effects.adoc[Forwarding and effects]
+** xref:serialization.adoc[Serialization]
+** xref:api.adoc[API docs]

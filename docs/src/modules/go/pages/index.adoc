@@ -1,0 +1,3 @@
+= Cloudstate Go
+
+Cloudstate offers an idiomatic Go support library for writing Cloudstate services.
