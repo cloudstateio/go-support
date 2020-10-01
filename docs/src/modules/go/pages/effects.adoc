@@ -1,4 +1,4 @@
-# Forwarding and effects
+= Forwarding and effects
 
 * Explain the ServiceCallFactory interface
 * Explain how to forward replies to another service.

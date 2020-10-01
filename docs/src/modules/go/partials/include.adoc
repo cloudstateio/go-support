@@ -1,0 +1,1 @@
+:cloudstate-go-version: 1.14

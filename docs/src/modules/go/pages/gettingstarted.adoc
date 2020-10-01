@@ -1,0 +1,96 @@
+= Getting started with Cloudstate services in Go
+
+include::partial$attributes.adoc[]
+include::partial$include.adoc[]
+
+== Prerequisites
+
+Go version:: Cloudstate Go support requires at least Go {cloudstate-go-version}
+
+Build tool:: Cloudstate does not require any particular build tool, you can select your own.
+
+protoc::
+Since Cloudstate is based on gRPC, you need a protoc compiler to compile gRPC protobuf descriptors.
+This can be done manually through the https://github.com/protocolbuffers/protobuf#user-content-protocol-compiler-installation[Protocol Buffer Compiler project].
+
+docker::
+Cloudstate runs in Kubernetes with https://www.docker.com[Docker], hence you will need Docker to build a container that you can deploy to Kubernetes.
+Most popular build tools have plugins that assist in building Docker images.
+
+In addition to the above, you will need to install the Cloudstate Go support library by issuing `go get -u github.com/cloudstateio/go-support/cloudstate` or with Go module support let the dependency be downloaded by `go [build|run|test]`.
+
+By using the Go module support your go.mod file will reference the latest version of the support library or you can define which version you like to use.
+
+[.tabset]
+go get::
++
+[source,shell"]
+----
+go get -u github.com/cloudstateio/go-support/cloudstate
+----
+
+import path::
++
+[source,go]
+----
+import "github.com/cloudstateio/go-support/cloudstate"
+----
+
+go.mod::
++
+[source,go,subs="attributes+"]
+----
+module example.com/yourpackage
+  require (
+      github.com/cloudstateio/go-support {cloudstate-go-lib-version}
+  )
+go {cloudstate-go-version}
+----
+
+== Protobuf files
+
+The Cloudstate Go Support Library provides no dedicated tool beside the protoc compiler to build your protobuf files.
+The Cloudstate protocol protobuf files as well as the shopping cart example application protobuf files are provided by the Cloudstate Repository.
+
+In addition to the `protoc` compiler, the gRPC Go plugin is needed to compile the protobuf file to `*.pb.go` files.
+Please follow the instructions at the https://github.com/golang/protobuf[Go support for Protocol Buffers] project page to install the protoc compiler as well as the `protoc-gen-go` plugin which also includes the Google standard protobuf types.
+
+To build the example shopping cart application shown earlier in xref:concepts:grpc.adoc[gRPC descriptors], you could simply paste that protobuf into `protos/shoppingcart.proto`.
+You may wish to also define the Go package using the `go_package` proto option, to ensure the package name used conforms to Go package naming conventions.
+
+[source,protobuf]
+----
+option go_package = "example/shoppingcart";
+----
+
+Now if you place your protobuf files under `protobuf/` and run `protoc --go_out=.
+--proto_path=protobuf ./protobuf/*.proto`, you'll find your generated protobuf files in `example/shoppingcart`.
+
+== Creating a main package
+
+Your main package will be responsible for creating the Cloudstate gRPC server, registering the entities for it to serve, and starting it.
+To do this, you can use the CloudState server type, for example:
+
+[source,go]
+----
+include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=shopping-cart-main]
+----
+
+We will see more details on registering entities in the coming pages.
+
+== Interfaces to be implemented
+
+Cloudstate entities in Go work by implementing interfaces and composing types.
+
+To get support for the Cloudstate event emission the Cloudstate entity should embed the `cloudstate.EventEmitter` type.
+The EventEmitter allows the entity to emit events during the handling of commands.
+
+Second, during registration of the entity, an entity factory function has to be provided so Cloudstate gets to know how to create and initialize an event sourced entity.
+
+[source,go]
+----
+include::example$cloudstate/eventsourced.go[tag=event-sourced-entity-func]
+----
+
+This entity factory function returns a `cloudstate.Entity` which itself is a composite interface of a `cloudstate.CommandHandler` and a `cloudstate.EventHandler`.
+Every event sourced entity has to implement these two interfaces.
