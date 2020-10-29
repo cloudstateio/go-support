@@ -24,20 +24,21 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cloudstateio/go-support/cloudstate/discovery"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 )
 
 func TestNewCloudState(t *testing.T) {
-	cloudState, _ := New(Config{})
-	si := cloudState.server.GetServiceInfo()
+	cloudState, _ := New(protocol.Config{})
+	si := cloudState.grpcServer.GetServiceInfo()
 	if si == nil {
 		t.Fail()
 	}
 }
 
 func TestEntityDiscoveryResponderDiscover(t *testing.T) {
-	server, _ := newEntityDiscoveryServer(Config{
+	server := discovery.NewServer(protocol.Config{
 		ServiceName:    "service.one",
 		ServiceVersion: "0.0.1",
 	})
@@ -79,7 +80,7 @@ func captureOutput(f func()) string {
 }
 
 func TestEntityDiscoveryResponderReportError(t *testing.T) {
-	server, _ := newEntityDiscoveryServer(Config{
+	server := discovery.NewServer(protocol.Config{
 		ServiceName:    "service.one",
 		ServiceVersion: "0.0.1",
 	})

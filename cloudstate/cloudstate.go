@@ -16,230 +16,92 @@
 package cloudstate
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	"runtime"
 
+	"github.com/cloudstateio/go-support/cloudstate/crdt"
+	"github.com/cloudstateio/go-support/cloudstate/discovery"
+	"github.com/cloudstateio/go-support/cloudstate/entity"
+	"github.com/cloudstateio/go-support/cloudstate/eventsourced"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
-	"github.com/golang/protobuf/descriptor"
-	"github.com/golang/protobuf/proto"
-	filedescr "github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 )
 
-const (
-	SupportLibraryVersion = "0.1.1"
-	SupportLibraryName    = "cloudstate-go-support"
-)
-
-// CloudState is an instance of a CloudState User Function
+// CloudState is an instance of a Cloudstate User Function.
 type CloudState struct {
-	server                *grpc.Server
-	entityDiscoveryServer *EntityDiscoveryServer
-	eventSourcedServer    *EventSourcedServer
+	grpcServer            *grpc.Server
+	entityDiscoveryServer *discovery.EntityDiscoveryServer
+	eventSourcedServer    *eventsourced.Server
+	crdtServer            *crdt.Server
 }
 
 // New returns a new CloudState instance.
-func New(config Config) (*CloudState, error) {
-	eds, err := newEntityDiscoveryServer(config)
-	if err != nil {
-		return nil, err
-	}
+func New(c protocol.Config) (*CloudState, error) {
 	cs := &CloudState{
-		server:                grpc.NewServer(),
-		entityDiscoveryServer: eds,
-		eventSourcedServer:    newEventSourcedServer(),
+		grpcServer:            grpc.NewServer(),
+		entityDiscoveryServer: discovery.NewServer(c),
+		eventSourcedServer:    eventsourced.NewServer(),
+		crdtServer:            crdt.NewServer(),
 	}
-	protocol.RegisterEntityDiscoveryServer(cs.server, cs.entityDiscoveryServer)
-	protocol.RegisterEventSourcedServer(cs.server, cs.eventSourcedServer)
+	protocol.RegisterEntityDiscoveryServer(cs.grpcServer, cs.entityDiscoveryServer)
+	entity.RegisterEventSourcedServer(cs.grpcServer, cs.eventSourcedServer)
+	entity.RegisterCrdtServer(cs.grpcServer, cs.crdtServer)
 	return cs, nil
 }
 
-// Config go get a CloudState instance configured.
-type Config struct {
-	ServiceName    string
-	ServiceVersion string
+// RegisterEventSourced registers an event sourced entity.
+func (cs *CloudState) RegisterEventSourced(entity *eventsourced.Entity, config protocol.DescriptorConfig) error {
+	if err := cs.eventSourcedServer.Register(entity); err != nil {
+		return err
+	}
+	if err := cs.entityDiscoveryServer.RegisterEventSourcedEntity(entity, config); err != nil {
+		return err
+	}
+	return nil
 }
 
-// DescriptorConfig configures service and dependent descriptors.
-type DescriptorConfig struct {
-	Service        string
-	Domain         []string
-	DomainMessages []descriptor.Message
+// RegisterCRDT registers a CRDT entity.
+func (cs *CloudState) RegisterCRDT(entity *crdt.Entity, config protocol.DescriptorConfig) error {
+	if err := cs.crdtServer.Register(entity); err != nil {
+		return err
+	}
+	if err := cs.entityDiscoveryServer.RegisterCRDTEntity(entity, config); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (dc DescriptorConfig) AddDomainMessage(m descriptor.Message) DescriptorConfig {
-	dc.DomainMessages = append(dc.DomainMessages, m)
-	return dc
-}
-
-func (dc DescriptorConfig) AddDomainDescriptor(filename string) DescriptorConfig {
-	dc.Domain = append(dc.Domain, filename)
-	return dc
-}
-
-// RegisterEventSourcedEntity registers an event sourced entity for CloudState.
-func (cs *CloudState) RegisterEventSourcedEntity(ese *EventSourcedEntity, config DescriptorConfig) (err error) {
-	ese.registerOnce.Do(func() {
-		if err = ese.init(); err != nil {
-			return
-		}
-		if err = cs.eventSourcedServer.registerEntity(ese); err != nil {
-			return
-		}
-		if err = cs.entityDiscoveryServer.registerEntity(ese, config); err != nil {
-			return
-		}
-	})
-	return
-}
-
-// Run runs the CloudState instance.
+// Run runs the CloudState instance on the interface and port defined by
+// the HOST and PORT environment variable.
 func (cs *CloudState) Run() error {
 	host, ok := os.LookupEnv("HOST")
 	if !ok {
-		return fmt.Errorf("unable to get environment variable \"HOST\"")
+		return errors.New("unable to get environment variable \"HOST\"")
 	}
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
-		return fmt.Errorf("unable to get environment variable \"PORT\"")
+		return errors.New("unable to get environment variable \"PORT\"")
 	}
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%s", host, port))
 	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
+		return fmt.Errorf("failed to listen: %w", err)
 	}
-	if e := cs.server.Serve(lis); e != nil {
-		return fmt.Errorf("failed to grpcServer.Serve for: %v", lis)
-	}
-	return nil
-}
-
-// EntityDiscoveryServer implements the Cloudstate discovery protocol.
-type EntityDiscoveryServer struct {
-	fileDescriptorSet *filedescr.FileDescriptorSet
-	entitySpec        *protocol.EntitySpec
-	message           *descriptor.Message
-}
-
-// newEntityDiscoveryServer returns a new and initialized EntityDiscoveryServer.
-func newEntityDiscoveryServer(config Config) (*EntityDiscoveryServer, error) {
-	svr := &EntityDiscoveryServer{}
-	svr.entitySpec = &protocol.EntitySpec{
-		Entities: make([]*protocol.Entity, 0),
-		ServiceInfo: &protocol.ServiceInfo{
-			ServiceName:           config.ServiceName,
-			ServiceVersion:        config.ServiceVersion,
-			ServiceRuntime:        fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH),
-			SupportLibraryName:    SupportLibraryName,
-			SupportLibraryVersion: SupportLibraryVersion,
-		},
-	}
-	svr.fileDescriptorSet = &filedescr.FileDescriptorSet{
-		File: make([]*filedescr.FileDescriptorProto, 0),
-	}
-	return svr, nil
-}
-
-// Discover returns an entity spec for registered entities.
-func (r *EntityDiscoveryServer) Discover(_ context.Context, pi *protocol.ProxyInfo) (*protocol.EntitySpec, error) {
-	log.Printf("Received discovery call from sidecar [%s w%s] supporting Cloudstate %v.%v\n",
-		pi.ProxyName,
-		pi.ProxyVersion,
-		pi.ProtocolMajorVersion,
-		pi.ProtocolMinorVersion,
-	)
-	log.Printf("Responding with: %v\n", r.entitySpec.GetServiceInfo())
-	return r.entitySpec, nil
-}
-
-// ReportError logs any user function error reported by the Cloudstate proxy.
-func (r *EntityDiscoveryServer) ReportError(_ context.Context, fe *protocol.UserFunctionError) (*empty.Empty, error) {
-	log.Printf("ReportError: %v\n", fe)
-	return &empty.Empty{}, nil
-}
-
-func (r *EntityDiscoveryServer) updateSpec() (err error) {
-	protoBytes, err := proto.Marshal(r.fileDescriptorSet)
-	if err != nil {
-		return errors.New("unable to Marshal FileDescriptorSet")
-	}
-	r.entitySpec.Proto = protoBytes
-	return nil
-}
-
-func (r *EntityDiscoveryServer) resolveFileDescriptors(dc DescriptorConfig) error {
-	// service
-	if dc.Service != "" {
-		if err := r.registerFileDescriptorProto(dc.Service); err != nil {
-			return err
-		}
-	}
-	// and dependent domain descriptors
-	for _, dp := range dc.Domain {
-		if err := r.registerFileDescriptorProto(dp); err != nil {
-			return err
-		}
-	}
-	for _, dm := range dc.DomainMessages {
-		if err := r.registerFileDescriptor(dm); err != nil {
-			return err
-		}
+	if err := cs.RunWithListener(lis); err != nil {
+		return fmt.Errorf("failed to RunWithListener for: %v with: %w", lis, err)
 	}
 	return nil
 }
 
-func (r *EntityDiscoveryServer) registerEntity(e *EventSourcedEntity, config DescriptorConfig) error {
-	if err := r.resolveFileDescriptors(config); err != nil {
-		return fmt.Errorf("failed to resolveFileDescriptor for DescriptorConfig: %+v: %w", config, err)
-	}
-	r.entitySpec.Entities = append(r.entitySpec.Entities, &protocol.Entity{
-		EntityType:    EventSourced,
-		ServiceName:   e.ServiceName,
-		PersistenceId: e.PersistenceID,
-	})
-	return r.updateSpec()
+// Run runs the CloudState instance with a listener provided.
+func (cs *CloudState) RunWithListener(lis net.Listener) error {
+	return cs.grpcServer.Serve(lis)
 }
 
-func (r *EntityDiscoveryServer) hasRegistered(filename string) bool {
-	for _, f := range r.fileDescriptorSet.File {
-		if f.GetName() == filename {
-			return true
-		}
-	}
-	return false
-}
-
-func (r *EntityDiscoveryServer) registerFileDescriptorProto(filename string) error {
-	if r.hasRegistered(filename) {
-		return nil
-	}
-	descriptorProto, err := unpackFile(proto.FileDescriptor(filename))
-	if err != nil {
-		return fmt.Errorf("failed to registerFileDescriptorProto for filename: %s: %w", filename, err)
-	}
-	r.fileDescriptorSet.File = append(r.fileDescriptorSet.File, descriptorProto)
-	for _, fn := range descriptorProto.Dependency {
-		err := r.registerFileDescriptorProto(fn)
-		if err != nil {
-			return err
-		}
-	}
-	return r.updateSpec()
-}
-
-func (r *EntityDiscoveryServer) registerFileDescriptor(msg descriptor.Message) error {
-	fd, _ := descriptor.ForMessage(msg) // this can panic
-	if r := recover(); r != nil {
-		return fmt.Errorf("descriptor.ForMessage panicked (%v) for: %+v", r, msg)
-	}
-	if r.hasRegistered(fd.GetName()) {
-		return nil
-	}
-	r.fileDescriptorSet.File = append(r.fileDescriptorSet.File, fd)
-	return nil
+// Stop gracefully stops the Cloudstate instance.
+func (cs *CloudState) Stop() {
+	cs.grpcServer.GracefulStop()
+	log.Println("CloudState stopped")
 }

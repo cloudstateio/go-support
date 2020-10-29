@@ -10,14 +10,13 @@ Go version:: Cloudstate Go support requires at least Go {cloudstate-go-version}
 Build tool:: Cloudstate does not require any particular build tool, you can select your own.
 
 protoc::
-Since Cloudstate is based on gRPC, you need a protoc compiler to compile gRPC protobuf descriptors.
-This can be done manually through the https://github.com/protocolbuffers/protobuf#user-content-protocol-compiler-installation[Protocol Buffer Compiler project].
+Since Cloudstate is based on gRPC services, you need a protoc compiler to compile gRPC protobuf descriptors.
+This can be done manually through the https://grpc.io/docs/languages/go/quickstart/#prerequisites[gRPC Project] where it's described how to install the protocol compiler as well as the go-protobuf and grpc compiler plugins for Go.
 
-docker::
+docker:
 Cloudstate runs in Kubernetes with https://www.docker.com[Docker], hence you will need Docker to build a container that you can deploy to Kubernetes.
-Most popular build tools have plugins that assist in building Docker images.
 
-In addition to the above, you will need to install the Cloudstate Go support library by issuing `go get -u github.com/cloudstateio/go-support/cloudstate` or with Go module support let the dependency be downloaded by `go [build|run|test]`.
+In addition to the above, you will need to install the Cloudstate Go language support library by issuing `go get -u github.com/cloudstateio/go-support/cloudstate` or with Go module support let the dependency be downloaded by `go [build|run|test]`.
 
 By using the Go module support your go.mod file will reference the latest version of the support library or you can define which version you like to use.
 
@@ -55,16 +54,16 @@ The Cloudstate protocol protobuf files as well as the shopping cart example appl
 In addition to the `protoc` compiler, the gRPC Go plugin is needed to compile the protobuf file to `*.pb.go` files.
 Please follow the instructions at the https://github.com/golang/protobuf[Go support for Protocol Buffers] project page to install the protoc compiler as well as the `protoc-gen-go` plugin which also includes the Google standard protobuf types.
 
-To build the example shopping cart application shown earlier in xref:concepts:grpc.adoc[gRPC descriptors], you could simply paste that protobuf into `protos/shoppingcart.proto`.
+To build the example shopping cart application shown earlier in xref:concepts:grpc.adoc[gRPC descriptors], you could simply paste that protobuf into a file named `shoppingcart.proto`.
 You may wish to also define the Go package using the `go_package` proto option, to ensure the package name used conforms to Go package naming conventions.
 
 [source,protobuf]
 ----
-option go_package = "example/shoppingcart";
+option go_package = "example.com/shoppingcart;shoppingcart";
 ----
 
 Now if you place your protobuf files under `protobuf/` and run `protoc --go_out=.
---proto_path=protobuf ./protobuf/*.proto`, you'll find your generated protobuf files in `example/shoppingcart`.
+--proto_path=protobuf ./protobuf/*.proto`, you'll find your generated protobuf files under `shoppingcart`.
 
 == Creating a main package
 
@@ -73,24 +72,21 @@ To do this, you can use the CloudState server type, for example:
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=shopping-cart-main]
+include::example$tck/cmd/tck_eventsourced/tck_eventsourced.go[tag=shopping-cart-main]
 ----
 
 We will see more details on registering entities in the coming pages.
 
 == Interfaces to be implemented
 
-Cloudstate entities in Go work by implementing interfaces and composing types.
-
-To get support for the Cloudstate event emission the Cloudstate entity should embed the `cloudstate.EventEmitter` type.
-The EventEmitter allows the entity to emit events during the handling of commands.
-
-Second, during registration of the entity, an entity factory function has to be provided so Cloudstate gets to know how to create and initialize an event sourced entity.
+Cloudstate entities in Go work by implementing interfaces and registering those entities with a Cloudstate instance.
+During the registration of the entity an entity factory function, {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Entity.EntityFunc[`eventsourced.Entity.EntityFunc`], has to be provided so that Cloudstate gets to know how to create and initialize an event sourced entity.
 
 [source,go]
 ----
-include::example$cloudstate/eventsourced.go[tag=event-sourced-entity-func]
+include::example$example/shoppingcart/entity.go[tag=entity-func]
 ----
 
-This entity factory function returns a `cloudstate.Entity` which itself is a composite interface of a `cloudstate.CommandHandler` and a `cloudstate.EventHandler`.
-Every event sourced entity has to implement these two interfaces.
+This entity factory function returns a type that implements the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`] interface.
+An entity can implement the optional {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Snapshooter[`eventsourced.Snapshooter`] interface if it likes to enable snapshot functionality.
+We will see later how to handle snapshots on the following pages.

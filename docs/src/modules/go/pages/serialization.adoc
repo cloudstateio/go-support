@@ -14,7 +14,7 @@ Cloudstate supports a number of types and serialization options for these values
 Cloudstate supports serializing the following primitive types:
 
 |===
-| Protobuf type | Go type
+| Protocol buffer type | Go type
 
 | string
 | string

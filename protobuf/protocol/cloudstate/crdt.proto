@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// gRPC interface for Event Sourced Entity user functions.
+// gRPC interface for CRDT Entity user functions.
 
 syntax = "proto3";
 
@@ -24,7 +24,7 @@ import "google/protobuf/any.proto";
 import "cloudstate/entity.proto";
 
 option java_package = "io.cloudstate.protocol";
-option go_package = "cloudstate/protocol";
+option go_package = "github.com/cloudstateio/go-support/cloudstate/entity;entity";
 
 // CRDT Protocol
 //
@@ -60,7 +60,7 @@ service Crdt {
     //
     // The user function must respond with one reply per command in. They do not necessarily have to be sent in the same
     // order that the commands were sent, the command ID is used to correlate commands to replies.
-    rpc handle(stream CrdtStreamIn) returns (stream CrdtStreamOut);
+    rpc handle (stream CrdtStreamIn) returns (stream CrdtStreamOut);
 }
 
 // Message for the Crdt handle stream in.

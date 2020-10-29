@@ -1,0 +1,361 @@
+// Copyright 2020 Lightbend Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Extension for specifying which field in a message is to be considered an
+// entity key, for the purposes associating gRPC calls with entities and
+// sharding.
+
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "cloudstate/entity_key.proto";
+
+package crdt;
+
+option java_package = "io.cloudstate.tck.model";
+option go_package = "github.com/cloudstateio/go-support/tck/proto/crdt;crdt";
+
+service TckCrdt {
+    rpc ProcessGCounter (GCounterRequest) returns (GCounterResponse);
+    rpc ProcessGCounterStreamed (GCounterRequest) returns (stream GCounterResponse);
+    rpc ProcessPNCounter (PNCounterRequest) returns (PNCounterResponse);
+    rpc ProcessGSet (GSetRequest) returns (GSetResponse);
+    rpc ProcessORSet (ORSetRequest) returns (ORSetResponse);
+    rpc ProcessFlag (FlagRequest) returns (FlagResponse);
+    rpc ProcessLWWRegister (LWWRegisterRequest) returns (LWWRegisterResponse);
+    rpc ProcessORMap (ORMapRequest) returns (ORMapResponse);
+    rpc ProcessVote (VoteRequest) returns (VoteResponse);
+}
+
+message ORMapRequest {
+    string id = 1 [(.cloudstate.entity_key) = true];
+    repeated ORMapRequestAction actions = 2;
+}
+
+message ORMapRequestAction {
+    oneof action {
+        Get get = 1;
+        Delete delete = 2;
+        ORMapSet setKey = 3;
+        ORMapDelete deleteKey = 4;
+        ORMapActionRequest request = 5;
+    }
+}
+
+message ORMapResponse {
+    ORMapKeys keys = 1;
+    ORMapEntries entries = 2;
+}
+
+message VoteRequest {
+    string id = 1 [(.cloudstate.entity_key) = true];
+    repeated VoteRequestAction actions = 2;
+}
+
+message VoteRequestAction {
+    oneof action {
+        Get get = 1;
+        Delete delete = 2;
+        VoteVote vote = 3;
+    }
+}
+
+message VoteResponse {
+    bool selfVote = 1;
+    uint32 voters = 2;
+    uint32 votesFor = 3;
+}
+
+message GCounterRequest {
+    string id = 1 [(.cloudstate.entity_key) = true];
+    repeated GCounterRequestAction actions = 2;
+}
+
+message GCounterRequestAction {
+    oneof action {
+        Get get = 1;
+        Delete delete = 2;
+        GCounterIncrement increment = 3;
+    }
+}
+
+message GCounterResponse {
+    GCounterValue value = 1;
+}
+
+message PNCounterRequest {
+    string id = 1 [(.cloudstate.entity_key) = true];
+    repeated PNCounterRequestAction actions = 2;
+}
+
+message PNCounterRequestAction {
+    oneof action {
+        Get get = 1;
+        Delete delete = 2;
+        PNCounterIncrement increment = 3;
+        PNCounterDecrement decrement = 4;
+    }
+}
+
+message PNCounterResponse {
+    PNCounterValue value = 1;
+}
+
+message GSetRequest {
+    string id = 1 [(.cloudstate.entity_key) = true];
+    repeated GSetRequestAction actions = 2;
+}
+
+message GSetRequestAction {
+    oneof action {
+        Get get = 1;
+        Delete delete = 2;
+        GSetAdd add = 3;
+    }
+}
+
+message GSetResponse {
+    GSetValue value = 1;
+}
+
+message ORSetRequest {
+    string id = 1 [(.cloudstate.entity_key) = true];
+    repeated ORSetRequestAction actions = 2;
+}
+
+message ORSetRequestAction {
+    oneof action {
+        Get get = 1;
+        Delete delete = 2;
+        ORSetAdd add = 3;
+        ORSetRemove remove = 4;
+    }
+}
+
+message ORSetResponse {
+    ORSetValue value = 1;
+}
+
+message FlagRequest {
+    string id = 1 [(.cloudstate.entity_key) = true];
+    repeated FlagRequestAction actions = 2;
+}
+
+message FlagRequestAction {
+    oneof action {
+        Get get = 1;
+        Delete delete = 2;
+        FlagEnable enable = 3;
+    }
+}
+
+message FlagResponse {
+    FlagValue value = 1;
+}
+
+message LWWRegisterRequest {
+    string id = 1 [(.cloudstate.entity_key) = true];
+    repeated LWWRegisterRequestAction actions = 2;
+}
+
+message LWWRegisterRequestAction {
+    oneof action {
+        Get get = 1;
+        Delete delete = 2;
+        LWWRegisterSet set = 3;
+        LWWRegisterSetWithClock setWithClock = 4;
+    }
+}
+
+message LWWRegisterResponse {
+    LWWRegisterValue value = 1;
+}
+
+message Get {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+}
+
+message Delete {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+}
+
+message AnySupportType {
+    oneof value {
+        google.protobuf.Any any_value = 3;
+        string string_value = 4;
+        bytes bytes_value = 5;
+        int32 int32_value = 6;
+        int64 int64_value = 7;
+        float float_value = 8;
+        double double_value = 9;
+        bool bool_value = 10;
+    }
+}
+
+message GCounterIncrement {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    uint64 value = 3;
+}
+
+message GCounterValue {
+    uint64 value = 2;
+}
+
+message PNCounterIncrement {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    int64 value = 3;
+}
+
+message PNCounterDecrement {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    int64 value = 3;
+}
+
+message PNCounterValue {
+    int64 value = 2;
+}
+
+message GSetAdd {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    AnySupportType value = 3;
+}
+
+message GSetValue {
+    repeated AnySupportType values = 1;
+}
+
+message GSetValueAnySupport {
+    repeated AnySupportType values = 1;
+}
+
+message ORSetAdd {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    AnySupportType value = 3;
+}
+
+message ORSetRemove {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    AnySupportType value = 3;
+}
+
+message ORSetValue {
+    repeated google.protobuf.Any values = 1;
+}
+
+message FlagEnable {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+}
+
+message FlagValue {
+    bool value = 1;
+}
+
+message LWWRegisterSet {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    AnySupportType value = 3;
+}
+
+// copy from crdt.proto
+enum CrdtClock {
+    // Use the default clock for deciding the last write, which is the system clocks
+    // milliseconds since epoch.
+    DEFAULT = 0;
+    // Use the reverse semantics with the default clock, to enable first write wins.
+    REVERSE = 1;
+    // Use a custom clock value, set using custom_clock_value.
+    CUSTOM = 2;
+    // Use a custom clock value, but automatically increment it by one if the clock
+    // value from the current value is equal to the custom_clock_value.
+    CUSTOM_AUTO_INCREMENT = 3;
+}
+
+message LWWRegisterSetWithClock {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    AnySupportType value = 3;
+    CrdtClock clock = 4;
+    int64 custom_clock_value = 5;
+}
+
+message LWWRegisterValue {
+    google.protobuf.Any value = 1;
+}
+
+message ORMapSet {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    google.protobuf.Any entry_key = 3;
+    google.protobuf.Any value = 4;
+    oneof request {
+        GCounterRequest gCounterRequest = 5;
+        PNCounterRequest pnCounterRequest = 6;
+        GSetRequest gsetRequest = 7;
+        ORSetRequest orSetRequest = 8;
+        FlagRequest flagRequest = 9;
+        LWWRegisterRequest lwwRegisterRequest = 10;
+        ORMapRequest orMapRequest = 11;
+        VoteRequest voteRequest = 12;
+    };
+}
+
+message ORMapActionRequest {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    google.protobuf.Any entry_key = 3;
+    oneof request {
+        GCounterRequest gCounterRequest = 4;
+        PNCounterRequest pnCounterRequest = 5;
+        GSetRequest gsetRequest = 6;
+        ORSetRequest orSetRequest = 7;
+        FlagRequest flagRequest = 8;
+        LWWRegisterRequest lwwRegisterRequest = 9;
+        ORMapRequest orMapRequest = 10;
+        VoteRequest voteRequest = 11;
+    };
+}
+
+message ORMapDelete {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    google.protobuf.Any entry_key = 3;
+}
+
+message ORMapEntry {
+    google.protobuf.Any entry_key = 1;
+    google.protobuf.Any value = 2;
+}
+
+message ORMapEntries {
+    repeated ORMapEntry values = 1;
+}
+
+message ORMapKeys {
+    repeated google.protobuf.Any values = 1;
+}
+
+message VoteVote {
+    string key = 1 [(.cloudstate.entity_key) = true];
+    string failWith = 2;
+    bool value = 3;
+}

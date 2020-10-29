@@ -18,8 +18,9 @@ package encoding
 import (
 	"bytes"
 	"fmt"
-	"github.com/golang/protobuf/ptypes/any"
 	"testing"
+
+	"github.com/golang/protobuf/ptypes/any"
 )
 
 type a struct {
@@ -36,23 +37,23 @@ var tests = []struct {
 	typeURL    string
 	shouldFail bool
 }{
-	{primitiveTypeURLPrefixInt32, uint32(28), primitiveTypeURLPrefixInt32, true},
-	{primitiveTypeURLPrefixInt32 + "_defaultValue", uint32(0), primitiveTypeURLPrefixInt32, true},
-	{primitiveTypeURLPrefixInt32, int32(29), primitiveTypeURLPrefixInt32, false},
-	{primitiveTypeURLPrefixInt32 + "_defaultValue", int32(0), primitiveTypeURLPrefixInt32, false},
-	{primitiveTypeURLPrefixInt64, int64(29), primitiveTypeURLPrefixInt64, false},
-	{primitiveTypeURLPrefixInt64 + "_defaultValue", int64(0), primitiveTypeURLPrefixInt64, false},
-	{primitiveTypeURLPrefixFloat, float32(2.9), primitiveTypeURLPrefixFloat, false},
-	{primitiveTypeURLPrefixFloat + "_defaultValue", float32(2.9), primitiveTypeURLPrefixFloat, false},
-	{primitiveTypeURLPrefixDouble, float64(2.9), primitiveTypeURLPrefixDouble, false},
-	{primitiveTypeURLPrefixDouble + "_defaultValue", float64(0), primitiveTypeURLPrefixDouble, false},
-	{primitiveTypeURLPrefixString, "29", primitiveTypeURLPrefixString, false},
-	{primitiveTypeURLPrefixString + "_defaultValue", "", primitiveTypeURLPrefixString, false},
-	{primitiveTypeURLPrefixBool + "_true", true, primitiveTypeURLPrefixBool, false},
-	{primitiveTypeURLPrefixBool + "_false", false, primitiveTypeURLPrefixBool, false},
-	{primitiveTypeURLPrefixBool + "_defaultValue", false, primitiveTypeURLPrefixBool, false},
-	{primitiveTypeURLPrefixBytes, make([]byte, 29), primitiveTypeURLPrefixBytes, false},
-	{primitiveTypeURLPrefixBytes + "_defaultValue", make([]byte, 0), primitiveTypeURLPrefixBytes, false},
+	{PrimitiveTypeURLPrefixInt32, uint32(28), PrimitiveTypeURLPrefixInt32, true},
+	{PrimitiveTypeURLPrefixInt32 + "_defaultValue", uint32(0), PrimitiveTypeURLPrefixInt32, true},
+	{PrimitiveTypeURLPrefixInt32, int32(29), PrimitiveTypeURLPrefixInt32, false},
+	{PrimitiveTypeURLPrefixInt32 + "_defaultValue", int32(0), PrimitiveTypeURLPrefixInt32, false},
+	{PrimitiveTypeURLPrefixInt64, int64(29), PrimitiveTypeURLPrefixInt64, false},
+	{PrimitiveTypeURLPrefixInt64 + "_defaultValue", int64(0), PrimitiveTypeURLPrefixInt64, false},
+	{PrimitiveTypeURLPrefixFloat, float32(2.9), PrimitiveTypeURLPrefixFloat, false},
+	{PrimitiveTypeURLPrefixFloat + "_defaultValue", float32(2.9), PrimitiveTypeURLPrefixFloat, false},
+	{PrimitiveTypeURLPrefixDouble, float64(2.9), PrimitiveTypeURLPrefixDouble, false},
+	{PrimitiveTypeURLPrefixDouble + "_defaultValue", float64(0), PrimitiveTypeURLPrefixDouble, false},
+	{PrimitiveTypeURLPrefixString, "29", PrimitiveTypeURLPrefixString, false},
+	{PrimitiveTypeURLPrefixString + "_defaultValue", "", PrimitiveTypeURLPrefixString, false},
+	{PrimitiveTypeURLPrefixBool + "_true", true, PrimitiveTypeURLPrefixBool, false},
+	{PrimitiveTypeURLPrefixBool + "_false", false, PrimitiveTypeURLPrefixBool, false},
+	{PrimitiveTypeURLPrefixBool + "_defaultValue", false, PrimitiveTypeURLPrefixBool, false},
+	{PrimitiveTypeURLPrefixBytes, make([]byte, 29), PrimitiveTypeURLPrefixBytes, false},
+	{PrimitiveTypeURLPrefixBytes + "_defaultValue", make([]byte, 0), PrimitiveTypeURLPrefixBytes, false},
 }
 
 func TestMarshallerPrimitives(t *testing.T) {
@@ -96,7 +97,7 @@ func TestMarshalUnmarshalPrimitive(t *testing.T) {
 			switch ut := u.(type) {
 			case []byte:
 				byt := tc.value.([]byte)
-				if bytes.Compare(byt, ut) != 0 {
+				if !bytes.Equal(byt, ut) {
 					t.Errorf("err: %v. got: %+v, expected: %+v", err, u, tc.value)
 				}
 			default:
@@ -119,11 +120,11 @@ func BenchmarkMarshallerPrimitives(b *testing.B) {
 				for i := 0; i < b.N; i++ {
 					any1, _ = MarshalPrimitive(tc.value)
 				}
-				any0 = any1 //prevent the call optimized away
+				any0 = any1 // prevent the call optimized away
 			})
 		}
 	}
-	_ = any0 == nil //use any0
+	_ = any0 == nil // use any0
 }
 
 func BenchmarkMarshalUnmarshal(b *testing.B) {
@@ -146,7 +147,7 @@ func BenchmarkMarshalUnmarshal(b *testing.B) {
 					switch ut := u.(type) {
 					case []byte:
 						byt := tc.value.([]byte)
-						if bytes.Compare(byt, ut) != 0 {
+						if !bytes.Equal(byt, ut) {
 							b.Errorf("err: %v. got: %+v, expected: %+v", err, u, tc.value)
 						}
 					default:
@@ -155,9 +156,9 @@ func BenchmarkMarshalUnmarshal(b *testing.B) {
 						}
 					}
 				}
-				any0 = any1 //prevent the call optimized away
+				any0 = any1 // prevent the call optimized away
 			})
 		}
 	}
-	_ = any0 == nil //use any0
+	_ = any0 == nil // use any0
 }
