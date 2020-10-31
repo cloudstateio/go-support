@@ -18,7 +18,6 @@ package crdt
 import (
 	"fmt"
 
-	"github.com/cloudstateio/go-support/cloudstate/encoding"
 	"github.com/golang/protobuf/ptypes/any"
 )
 
@@ -50,14 +49,6 @@ func (m *ORMap) GSet(key *any.Any) (*GSet, error) {
 		return nil, fmt.Errorf("value at key: %v is not of type GSet but: %+v", key, v)
 	}
 	return nil, nil
-}
-
-func (m *ORMap) LWWRegisterBy(key interface{}) (*LWWRegister, error) {
-	k, err := encoding.MarshalAny(key)
-	if err != nil {
-		return nil, err
-	}
-	return m.LWWRegister(k)
 }
 
 func (m *ORMap) LWWRegister(key *any.Any) (*LWWRegister, error) {

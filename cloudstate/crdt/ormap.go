@@ -128,18 +128,18 @@ func (m *ORMap) Delete(key *any.Any) {
 	m.delta.removed[k] = key
 }
 
-func (d *orMapDelta) clear() {
-	d.added = make(map[uint64]*any.Any)
-	d.removed = make(map[uint64]*any.Any)
-	d.cleared = true
-}
-
 func (m *ORMap) Clear() {
 	if len(m.value) == 0 {
 		return
 	}
 	m.value = make(map[uint64]*orMapValue)
 	m.delta.clear()
+}
+
+func (d *orMapDelta) clear() {
+	d.added = make(map[uint64]*any.Any)
+	d.removed = make(map[uint64]*any.Any)
+	d.cleared = true
 }
 
 func (m *ORMap) HasDelta() bool {

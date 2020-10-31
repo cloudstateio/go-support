@@ -2,7 +2,6 @@ package synth
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -23,12 +22,8 @@ func BenchmarkCRDTORMap(b *testing.B) {
 	p.init(&entity.CrdtInit{ServiceName: serviceName, EntityId: entityID})
 
 	tr := tester{s.t}
-	var sum uint64
 	b.Run("ORMap", func(b *testing.B) {
 		b.ReportAllocs()
-		defer func() {
-			fmt.Println(sum)
-		}()
 		inc0 := uint64(1)
 		for i := 0; i < b.N; i++ {
 			switch m := p.command(entityID, command,
@@ -40,7 +35,6 @@ func BenchmarkCRDTORMap(b *testing.B) {
 				}),
 			).Message.(type) {
 			case *entity.CrdtStreamOut_Reply:
-				sum += inc0
 				var r crdt.ORMapResponse
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
 				var state entity.CrdtState_Gcounter
