@@ -123,38 +123,6 @@ func TestCRDTGSet(t *testing.T) {
 				tr.unexpected(m)
 			}
 		})
-		// t.Run("further calls of AddGSet should emit client action and delta state action", func(t *testing.T) {
-		// 	tr := tester{t}
-		// }
-		// t.Run("adding more values should result in a larger set", func(t *testing.T) {
-		// 	tr := tester{t}
-		// 	// for pr := range []pair{
-		// 	// 	{"two", 2},
-		// 	// 	{"three", 3},
-		// 	// } {
-		// 	// 	switch m := p.command(
-		// 	// 		entityID, "AddGSet",
-		// 	// 		&crdt.GSetAdd{Key: entityID,
-		// 	// 			Value: &crdt.AnySupportType{Value: &crdt.AnySupportType_AnyValue{AnyValue: encoding.Struct(pr)}},
-		// 	// 		},
-		// 	// 	).Message.(type) {
-		// 	// 	case *entity.CrdtStreamOut_Reply:
-		// 	// 		tr.expectedNotNil(m.Reply.GetStateAction().GetUpdate())
-		// 	// 	default:
-		// 	// 		tr.unexpected(m)
-		// 	// 	}
-		// 	// }
-		// 	// switch m := p.command(
-		// 	// 	entityID, "GetGSetSize", &crdt.Get{Key: entityID},
-		// 	// ).Message.(type) {
-		// 	// case *entity.CrdtStreamOut_Reply:
-		// 	// 	var value crdt.GSetSize
-		// 	// 	tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &value)
-		// 	// 	tr.expectedInt64(value.Value, 3)
-		// 	// default:
-		// 	// 	tr.unexpected(m)
-		// 	// }
-		// })
 	})
 
 	t.Run("GSet AnySupportTypes", func(t *testing.T) {

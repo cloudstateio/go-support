@@ -171,11 +171,8 @@ func (s *EntityDiscoveryServer) registerFileDescriptorProto(filename string) err
 	return s.updateSpec()
 }
 
-func (s *EntityDiscoveryServer) registerFileDescriptor(msg descriptor.Message) error {
+func (s *EntityDiscoveryServer) registerFileDescriptor(msg descriptor.Message) (err error) {
 	fd, _ := descriptor.ForMessage(msg) // this can panic.
-	if r := recover(); r != nil {
-		return fmt.Errorf("descriptor.ForMessage panicked (%v) for: %+v", r, msg)
-	}
 	if s.hasRegistered(fd.GetName()) {
 		return nil
 	}
