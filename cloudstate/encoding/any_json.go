@@ -17,24 +17,31 @@ package encoding
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/any"
+	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/any"
 )
 
 const (
-	jsonTypeURLPrefix = "json.cloudstate.io"
+	JSONTypeURLPrefix = "json.cloudstate.io"
 )
 
+func JSON(value interface{}) (*any.Any, error) {
+	return MarshalJSON(value)
+}
+
+// MarshalJSON encodes a struct type into its Cloudstate Any JSON value.
 func MarshalJSON(value interface{}) (*any.Any, error) {
 	typeOf := reflect.TypeOf(value)
-	if typeOf.Kind() != reflect.Struct {
-		return nil, ErrNotMarshalled
+	if typeOf.Kind() == reflect.Ptr {
+		typeOf = reflect.ValueOf(value).Elem().Type()
 	}
 	buffer := proto.NewBuffer(make([]byte, 0))
 	buffer.SetDeterministic(true)
-	typeUrl := jsonTypeURLPrefix + "/" + typeOf.PkgPath() + "." + typeOf.Name()
+	typeURL := fmt.Sprintf("%s/%s.%s", JSONTypeURLPrefix, typeOf.PkgPath(), typeOf.Name())
 	_ = buffer.EncodeVarint(fieldKey | proto.WireBytes)
 	bytes, err := json.Marshal(value)
 	if err != nil {
@@ -42,15 +49,14 @@ func MarshalJSON(value interface{}) (*any.Any, error) {
 	}
 	_ = buffer.EncodeRawBytes(bytes)
 	return &any.Any{
-		TypeUrl: typeUrl,
+		TypeUrl: typeURL,
 		Value:   buffer.Bytes(),
 	}, nil
 }
 
-// UnmarshalPrimitive decodes a CloudState Any proto message
-// into its JSON value.
+// UnmarshalPrimitive decodes a Cloudstate Any protobuf message into its JSON value.
 func UnmarshalJSON(any *any.Any, target interface{}) error {
-	if !strings.HasPrefix(any.GetTypeUrl(), jsonTypeURLPrefix) {
+	if !strings.HasPrefix(any.GetTypeUrl(), JSONTypeURLPrefix) {
 		return ErrNotMarshalled
 	}
 	buffer := proto.NewBuffer(any.GetValue())

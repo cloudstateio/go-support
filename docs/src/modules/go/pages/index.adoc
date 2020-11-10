@@ -1,3 +1,10 @@
 = Cloudstate Go
 
 Cloudstate offers an idiomatic Go support library for writing Cloudstate services.
+
+* xref:gettingstarted.adoc[Getting started]
+* xref:eventsourced.adoc[Event sourcing]
+* xref:crdt.adoc[Conflict-free Replicated Data Types]
+* xref:effects.adoc[Forwarding and effects]
+* xref:serialization.adoc[Serialization]
+* https://pkg.go.dev/github.com/cloudstateio/go-support/cloudstate[API docs]

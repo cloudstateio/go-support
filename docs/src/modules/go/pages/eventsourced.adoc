@@ -1,20 +1,22 @@
 = Event sourcing
 
+include::partial$include.adoc[]
+
 This page documents how to implement Cloudstate event sourced entities in Go.
 For information on what Cloudstate event sourced entities are, please read the general xref:concepts:eventsourced.adoc[Event sourcing] documentation first.
 
-An event sourced entity can be created by embedding the `cloudstate.EventEmitter` type and also implementing the `cloudstate.Entity` interface.
+An event sourced entity can be created by implementing the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`] interface.
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=entity-type]
+include::example$cloudstate/eventsourced/entity.go[tag=entity-type]
 ----
 
-Then by composing the Cloudstate entity with a `cloudstate.EventSourcedEntity` and register it with `CloudState.Register()`, your entity gets configured to be an event sourced entity and handled by the Cloudstate instance from now on.
+Then register that entity with {cloudstate-go-lib-api-base}/cloudstate/cloudstate#RegisterEventSourced[`cloudstate.CloudState.RegisterEventSourced`], your entity gets configured to be an event sourced entity and handled by the Cloudstate instance from now on.
 
 [source,go]
 ----
-include::example$cloudstate/eventsourced.go[tag=event-sourced-entity-type]
+include::example$tck/cmd/tck_eventsourced/tck_eventsourced.go[tag=event-sourced-entity-type]
 ----
 
 The `ServiceName` is the fully qualified name of the gRPC service that implements this entity's interface.
@@ -28,33 +30,38 @@ The `SnapshotEvery` parameter controls how often snapshots are taken, so that th
 If left unset, it defaults to 100.
 Setting it to a negative number will result in snapshots never being taken.
 
-The `EntityFunc` is a factory method which generates a new Entity whenever Cloudstate has to initialize a new entity.
+The `EntityFunc` is a factory function which generates a new entity whenever Cloudstate has to initialize one.
+
+[source,go]
+----
+include::example$example/shoppingcart/entity.go[tag=entity-func]
+----
 
 == Persistence types and serialization
 
 Event sourced entities persist events and snapshots, and these need to be serialized when persisted.
-The most straightforward way to persist events and snapshots is to use protobufs.
+The most straightforward way to persist events and snapshots is to use protocol buffers (protobuf).
 Cloudstate will automatically detect if an emitted event is a protobuf, and serialize it as such.
 For other serialization options, including JSON, see xref:contribute:serialization.adoc[Serialization].
 
 While protobufs are the recommended format for persisting events, it is recommended that you do not persist your service's protobuf messages, rather, you should create new messages, even if they are identical to the service's.
-While this may introduce some overhead in needing to convert from one type to the other, the reason for doing this is that it will allow the service's public interface to evolve independently from its data storage format, which should be private.
+While this may introduce some overhead in needing to convert from one type to the other, the reason for doing this is that it will allow the service's public interface to evolve independently of its data storage format, which should be private.
 
-For our shopping cart example, we'll create a new file called `domain.proto`, the name domain is selected to indicate that these are my application's domain objects:
+For our shopping cart example, we'll create a new file called `domain.proto`, the name domain is selected to indicate that these are our application's domain objects:
 
 [source,protobuf]
 ----
-include::example$protobuf/example/shoppingcart/persistence/domain.proto[]
+include::example$example/shoppingcart/persistence/domain.proto[tag=domain]
 ----
 
 == State
 
 Each entity should store its state locally in a mutable variable, either a mutable field or a multiple structure such as an array type or slice.
-For our shopping cart, the state is a slice of products, so we'll create a slice of LineItems to contain that:
+For our shopping cart, the state is a slice of products, so we'll create a slice of `LineItems` to contain that:
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=entity-state]
+include::example$example/shoppingcart/entity.go[tag=entity-state]
 ----
 
 == Constructing
@@ -64,37 +71,36 @@ For this, an entity has to provide a factory function, `EntityFunc`, which is se
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=register]
+include::example$tck/cmd/tck_eventsourced/tck_eventsourced.go[tag=register]
 ----
 
-The entity factory function returns a `cloudstate.Entity` which is composed of two interfaces to handle commands and events.
+The entity factory function returns a {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`] which handles commands and events.
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=constructing]
+include::example$example/shoppingcart/entity.go[tag=entity-func]
 ----
 
 == Handling commands
 
-An event sourced entity implements the composed `cloudstate.Entity` interface.
-`cloudstate.Entity` embeds the `cloudstate.EventHandler` interface and therefore entities implementing it get commands from Cloudstate through the event handler's `HandleCommand` method.
-
+An event sourced entity implements the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`] interface and there for command handling the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#HandleCommand[`HandleCommand`] method.
 The command types received by an event sourced entity are declared by the gRPC Server interface which is generated from the protobuf definitions.
-The Cloudstate Go Support library together with the registered `cloudstate.EventSourcedEntity` is then able to dispatch commands it gets from the Cloudstate proxy to the event sourced entity.
+The Cloudstate Go Support library together with the registered `eventsourced.Entity` is then able to dispatch commands it gets from the Cloudstate proxy.
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=handle-command]
+include::example$example/shoppingcart/entity.go[tag=handle-command]
 ----
 
-The return type of the command handler is by definition of the service interface, the output type for the gRPC service call, this will be sent as the reply.
+The return type of the command handler is by definition of the service interface, the output type for the gRPC service call.
+This will be sent as the reply.
 
 The following shows the implementation of the `GetCart` command handler.
 This command handler is a read-only command handler, it doesn't emit any events, it just returns some state:
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=get-cart]
+include::example$example/shoppingcart/entity.go[tag=get-cart]
 ----
 
 === Emitting events
@@ -104,18 +110,18 @@ Commands that modify the state may do so by emitting events.
 WARNING: The *only* way a command handler may modify its state is by emitting an event.
 Any modifications made directly to the state from the command handler will not be persisted, and when the entity is passivated and next reloaded, those modifications will not be present.
 
-A command handler may emit an event by using the embedded `cloudstate.EventEmitter` and invoking the `Emit` method on it.
-Calling `Emit` will immediately invoke the associated event handler for that event - this both validates that the event can be applied to the current state, as well as updates the state so that subsequent processing in the command handler can use it.
+A command handler may emit an event by using the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Context[`eventsourced.Context`] and invoking the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Emit[`Emit`] method on it.
+Calling {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Emit[`Emit`] will immediately invoke the associated event handler for that event - this both validates that the event can be applied to the current state, as well as updates the state so that subsequent processing in the command handler can use it.
 
 Here's an example of a command handler that emits an event:
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=add-item]
+include::example$example/shoppingcart/entity.go[tag=add-item]
 ----
 
 This command handler also validates the command, ensuring the quantity of items added is greater than zero.
-Returning an `error` fails the command and the support library takes care of signaling that back to the requesting proxy as a `Failure` reply.
+Returning an `error` fails the command and the support library takes care of signaling that back to the requesting proxy as a {cloudstate-go-lib-api-base}/cloudstate/protocol#Failure[`protocol.Failure`] reply.
 
 == Handling events
 
@@ -123,62 +129,49 @@ Event handlers are invoked at two points, when restoring entities from the journ
 An event handler's responsibility is to update the state of the entity according to the event.
 Event handlers are the only place where it's safe to mutate the state of the entity at all.
 
-Event handlers are declared by implementing the `cloudstate.EventHandler` interface.
-
-[source,go]
-----
-include::example$cloudstate/event.go[tag=event-handler]
-----
-
+Every event sourced entity implements the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`]s interface {cloudstate-go-lib-api-base}/cloudstate/eventsourced#HandleEvent[`HandleEvent`] method.
 Events emitted by command handlers get dispatched to the implemented event handler which then decides how to proceed with the event.
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=handle-event]
+include::example$example/shoppingcart/entity.go[tag=handle-event]
 ----
 
 Here's an example of a concrete event handler for the `ItemAdded` event.
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=item-added]
+include::example$example/shoppingcart/entity.go[tag=item-added]
 ----
 
 == Producing and handling snapshots
 
 Snapshots are an important optimisation for event sourced entities that may contain many events, to ensure that they can be loaded quickly even when they have very long journals.
-To produce a snapshot, the `cloudstate.Snapshotter` interface has to be implemented that must return a snapshot of the current state in serializable form.
+To produce a snapshot, the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Snapshooter[`eventsourced.Snapshooter`] interface has to be implemented that must return a snapshot of the current state in serializable form.
 
 [source,go]
 ----
-include::example$cloudstate/event.go[tag=snapshotter]
+include::example$cloudstate/eventsourced/entity.go[tag=snapshooter]
 ----
 
-Here is an example of the TCK shopping cart example creating snapshots for the current `domain.Cart` state of the shopping cart.
-
-[source,go]
-----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=snapshotter]
-----
-
-When the entity is loaded again, the snapshot will first be loaded before any other events are received, and passed to a snapshot handler.
-Snapshot handlers are declared by implementing the `cloudstate.SnapshotHandler` interface.
+Here is an example of the shopping cart example creating snapshots for the current `domain.Cart` state of the shopping cart.
 
 [source,go]
 ----
-include::example$cloudstate/event.go[tag=snapshot-handler]
+include::example$example/shoppingcart/entity.go[tag=snapshot]
 ----
 
-A snapshot handler then can type-switch over types the corresponding `cloudstate.Snapshotter` interface has implemented.
+When the entity is loaded again, the snapshot will first be loaded before any other events are received, and passed to a snapshot handler implementing the `eventsourced.Snapshooter`s `HandleSnapshot` method.
+A snapshot handler then can type-switch over types the corresponding {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Snapshooter[`eventsourced.Snapshooter`] interface has implemented.
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=handle-snapshot]
+include::example$example/shoppingcart/entity.go[tag=handle-snapshot]
 ----
 
 == Registering the entity
 
-Once you've created your entity, you can register it with the `cloudstate.Cloudstate` server, by invoking the `Register` method of a Cloudstate instance.
+Once you've created your entity, you can register it with the {cloudstate-go-lib-api-base}/cloudstate#CloudState[`cloudstate.CloudState`] server, by invoking the `RegisterEventSourced` method of a CloudState instance.
 In addition to passing your entity type and service name, you also need to pass any descriptors that you use for persisting events, for example, the `domain.proto` descriptor.
 
 During registration the optional ServiceName and the ServiceVersion can be configured.
@@ -186,5 +179,5 @@ During registration the optional ServiceName and the ServiceVersion can be confi
 
 [source,go]
 ----
-include::example$tck/cmd/tck_shoppingcart/shoppingcart.go[tag=register]
+include::example$tck/cmd/tck_eventsourced/tck_eventsourced.go[tag=register]
 ----

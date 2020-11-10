@@ -46,12 +46,18 @@ attributes: ${cloudstate_antora}
 
 examples:
 	# also create empty go module to ignore example sources
+	# https://youtrack.jetbrains.com/issue/GO-9320
+	# https://github.com/golang/go/issues/30058
 	mkdir -p "${managed_examples}"
 	touch "${managed_examples}/go.mod"
-	$(call copy_example,cloudstate/event.go)
-	$(call copy_example,cloudstate/eventsourced.go)
-	$(call copy_example,protobuf/example/shoppingcart/persistence/domain.proto)
-	$(call copy_example,tck/cmd/tck_shoppingcart/shoppingcart.go)
+	$(call copy_example,cloudstate/eventsourced/entity.go)
+	$(call copy_example,cloudstate/crdt/entity.go)
+	$(call copy_example,example/shoppingcart/entity.go)
+	$(call copy_example,example/shoppingcart/persistence/domain.proto)
+	$(call copy_example,tck/cmd/tck_eventsourced/tck_eventsourced.go)
+	$(call copy_example,example/crdt_shoppingcart/shoppingcart/entity.go)
+	$(call copy_example,example/crdt_shoppingcart/cmd/crdt_shoppingcart.go)
+	$(call copy_example,example/effects/shoppingcart/entity.go)
 
 ${descriptor}: ${cloudstate_antora}
 	mkdir -p $$(dirname ${descriptor})

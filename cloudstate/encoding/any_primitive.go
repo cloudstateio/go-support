@@ -16,56 +16,57 @@
 package encoding
 
 import (
+	"math"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
-	"math"
 )
 
 const (
 	PrimitiveTypeURLPrefix = "p.cloudstate.io"
+	ProtoAnyBase           = "type.googleapis.com"
 
-	primitiveTypeURLPrefixInt32  = PrimitiveTypeURLPrefix + "/int32"
-	primitiveTypeURLPrefixInt64  = PrimitiveTypeURLPrefix + "/int64"
-	primitiveTypeURLPrefixString = PrimitiveTypeURLPrefix + "/string"
-	primitiveTypeURLPrefixFloat  = PrimitiveTypeURLPrefix + "/float"
-	primitiveTypeURLPrefixDouble = PrimitiveTypeURLPrefix + "/double"
-	primitiveTypeURLPrefixBool   = PrimitiveTypeURLPrefix + "/bool"
-	primitiveTypeURLPrefixBytes  = PrimitiveTypeURLPrefix + "/bytes"
+	PrimitiveTypeURLPrefixInt32  = PrimitiveTypeURLPrefix + "/int32"
+	PrimitiveTypeURLPrefixInt64  = PrimitiveTypeURLPrefix + "/int64"
+	PrimitiveTypeURLPrefixString = PrimitiveTypeURLPrefix + "/string"
+	PrimitiveTypeURLPrefixFloat  = PrimitiveTypeURLPrefix + "/float"
+	PrimitiveTypeURLPrefixDouble = PrimitiveTypeURLPrefix + "/double"
+	PrimitiveTypeURLPrefixBool   = PrimitiveTypeURLPrefix + "/bool"
+	PrimitiveTypeURLPrefixBytes  = PrimitiveTypeURLPrefix + "/bytes"
 )
 
 const fieldKey = 1 << 3
 
 func MarshalPrimitive(i interface{}) (*any.Any, error) {
-	buf := make([]byte, 0)
-	buffer := proto.NewBuffer(buf)
+	buffer := proto.NewBuffer(make([]byte, 0))
 	buffer.SetDeterministic(true)
 	// see https://developers.google.com/protocol-buffers/docs/encoding#structure
-	var typeUrl string
+	var typeURL string
 	switch val := i.(type) {
 	case int32:
-		typeUrl = primitiveTypeURLPrefixInt32
+		typeURL = PrimitiveTypeURLPrefixInt32
 		_ = buffer.EncodeVarint(fieldKey | proto.WireVarint)
 		_ = buffer.EncodeVarint(uint64(val))
 	case int64:
-		typeUrl = primitiveTypeURLPrefixInt64
+		typeURL = PrimitiveTypeURLPrefixInt64
 		_ = buffer.EncodeVarint(fieldKey | proto.WireVarint)
 		_ = buffer.EncodeVarint(uint64(val))
 	case string:
-		typeUrl = primitiveTypeURLPrefixString
+		typeURL = PrimitiveTypeURLPrefixString
 		_ = buffer.EncodeVarint(fieldKey | proto.WireBytes)
 		if err := buffer.EncodeStringBytes(val); err != nil {
 			return nil, err
 		}
 	case float32:
-		typeUrl = primitiveTypeURLPrefixFloat
+		typeURL = PrimitiveTypeURLPrefixFloat
 		_ = buffer.EncodeVarint(fieldKey | proto.WireFixed32)
 		_ = buffer.EncodeFixed32(uint64(math.Float32bits(val)))
 	case float64:
-		typeUrl = primitiveTypeURLPrefixDouble
+		typeURL = PrimitiveTypeURLPrefixDouble
 		_ = buffer.EncodeVarint(fieldKey | proto.WireFixed64)
 		_ = buffer.EncodeFixed64(math.Float64bits(val))
 	case bool:
-		typeUrl = primitiveTypeURLPrefixBool
+		typeURL = PrimitiveTypeURLPrefixBool
 		_ = buffer.EncodeVarint(fieldKey | proto.WireVarint)
 		switch val {
 		case true:
@@ -74,7 +75,7 @@ func MarshalPrimitive(i interface{}) (*any.Any, error) {
 			_ = buffer.EncodeVarint(0)
 		}
 	case []byte:
-		typeUrl = primitiveTypeURLPrefixBytes
+		typeURL = PrimitiveTypeURLPrefixBytes
 		_ = buffer.EncodeVarint(fieldKey | proto.WireBytes)
 		if err := buffer.EncodeRawBytes(val); err != nil {
 			return nil, err
@@ -83,7 +84,7 @@ func MarshalPrimitive(i interface{}) (*any.Any, error) {
 		return nil, ErrNotMarshalled
 	}
 	return &any.Any{
-		TypeUrl: typeUrl,
+		TypeUrl: typeURL,
 		Value:   buffer.Bytes(),
 	}, nil
 }
@@ -92,7 +93,7 @@ func MarshalPrimitive(i interface{}) (*any.Any, error) {
 // into its primitive value.
 func UnmarshalPrimitive(any *any.Any) (interface{}, error) {
 	buffer := proto.NewBuffer(any.GetValue())
-	if any.GetTypeUrl() == primitiveTypeURLPrefixInt32 {
+	if any.GetTypeUrl() == PrimitiveTypeURLPrefixInt32 {
 		_, err := buffer.DecodeVarint()
 		if err != nil {
 			return nil, ErrNotUnmarshalled
@@ -103,7 +104,7 @@ func UnmarshalPrimitive(any *any.Any) (interface{}, error) {
 		}
 		return int32(value), nil
 	}
-	if any.GetTypeUrl() == primitiveTypeURLPrefixInt64 {
+	if any.GetTypeUrl() == PrimitiveTypeURLPrefixInt64 {
 		_, err := buffer.DecodeVarint()
 		if err != nil {
 			return nil, ErrNotUnmarshalled
@@ -114,7 +115,7 @@ func UnmarshalPrimitive(any *any.Any) (interface{}, error) {
 		}
 		return int64(value), nil
 	}
-	if any.GetTypeUrl() == primitiveTypeURLPrefixString {
+	if any.GetTypeUrl() == PrimitiveTypeURLPrefixString {
 		_, err := buffer.DecodeVarint()
 		if err != nil {
 			return nil, ErrNotUnmarshalled
@@ -125,7 +126,7 @@ func UnmarshalPrimitive(any *any.Any) (interface{}, error) {
 		}
 		return value, nil
 	}
-	if any.GetTypeUrl() == primitiveTypeURLPrefixFloat {
+	if any.GetTypeUrl() == PrimitiveTypeURLPrefixFloat {
 		_, err := buffer.DecodeVarint()
 		if err != nil {
 			return nil, ErrNotUnmarshalled
@@ -136,7 +137,7 @@ func UnmarshalPrimitive(any *any.Any) (interface{}, error) {
 		}
 		return math.Float32frombits(uint32(value)), nil
 	}
-	if any.GetTypeUrl() == primitiveTypeURLPrefixDouble {
+	if any.GetTypeUrl() == PrimitiveTypeURLPrefixDouble {
 		_, err := buffer.DecodeVarint()
 		if err != nil {
 			return nil, ErrNotUnmarshalled
@@ -147,7 +148,7 @@ func UnmarshalPrimitive(any *any.Any) (interface{}, error) {
 		}
 		return math.Float64frombits(value), nil
 	}
-	if any.GetTypeUrl() == primitiveTypeURLPrefixBool {
+	if any.GetTypeUrl() == PrimitiveTypeURLPrefixBool {
 		_, err := buffer.DecodeVarint()
 		if err != nil {
 			return nil, ErrNotUnmarshalled
@@ -158,7 +159,7 @@ func UnmarshalPrimitive(any *any.Any) (interface{}, error) {
 		}
 		return value == 1, nil
 	}
-	if any.GetTypeUrl() == primitiveTypeURLPrefixBytes {
+	if any.GetTypeUrl() == PrimitiveTypeURLPrefixBytes {
 		_, err := buffer.DecodeVarint()
 		if err != nil {
 			return nil, ErrNotUnmarshalled
