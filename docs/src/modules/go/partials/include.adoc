@@ -1,1 +1,2 @@
 :cloudstate-go-version: 1.14
+:cloudstate-go-lib-api-base: https://pkg.go.dev/github.com/cloudstateio/go-support

@@ -1,5 +1,38 @@
 = Forwarding and effects
 
-* Explain the ServiceCallFactory interface
-* Explain how to forward replies to another service.
-* Explain how to emit effects.
+include::partial$include.adoc[]
+
+This page documents how to use Cloudstate effects and forwarding in Go.
+For high level information on what Cloudstate effects and forwarding is, please read the general xref:concepts:effects.adoc[forwarding and effects] documentation first.
+
+== Service References
+
+Unlike other language support libraries, the Go Support Library for Cloudstate is quite explicit and direct in the API types used.
+The Forwarding and effects API being no different.
+
+The Go gRPC protobuf compiler plugin doesn't expose service descriptors.
+As a consequence, command, forward and effect handlers require the user to provide unchecked plain strings to reference a commands gRPC service name or services method names.
+The same applies for service names and command names used with effects and forwards.
+
+== Forwarding command
+
+The `Context` for each entity type provides a `Forward` method to allow forwarding a command by invoking {cloudstate-go-lib-api-base}/cloudstate/crdt#CommandContext.Forward[`crdt.CommandContext.Forward`].
+For example, if the item being processed in the `addItem` command is a "hot" item, we can make the `HotItems` entity aware of that item by forwarding a command:
+
+[source,go]
+----
+include::example$example/effects/shoppingcart/entity.go[tag=forward]
+----
+
+== Emitting an effect
+
+The `Context` for each entity type provides a `SideEffect` method to allow forwarding a command by invoking {cloudstate-go-lib-api-base}/cloudstate/crdt#CommandContext.SideEffect[`crdt.CommandContext.SideEffect`].
+For example, upon successful completion of the `addItem` command by `ShoppingCartEntity`, if we also want to emit an effect on the `HotItems` entity, we would invoke the effectful service call as:
+
+[source,go]
+----
+include::example$example/effects/shoppingcart/entity.go[tag=effect]
+----
+
+Please note that, contrary to command forwarding, the result of the effect is ignored by the current command `addItem`.
+More details can be found in the common section xref:concepts:effects.adoc[Forwarding and effects].
