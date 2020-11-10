@@ -31,9 +31,9 @@ jobs:
     - stage: deploy_docs
       if: repo = cloudstateio/go-support AND tag =~ ^v
       script: make -C docs deploy
-    - stage: deploy devcontainer image
-      name: deploy devcontainer image to dockerhub
-      if: branch = master AND type = push
-      script:
-        - echo "$DOCKER_PASSWORD" | docker login -u cloudstatebot --password-stdin
-        - pushd . && cd .devcontainer && ./build.sh push && popd
+#    - stage: deploy devcontainer image
+#      name: deploy devcontainer image to dockerhub
+#      if: branch = master AND type = push
+#      script:
+#        - echo "$DOCKER_PASSWORD" | docker login -u cloudstatebot --password-stdin
+#        - pushd . && cd .devcontainer && ./build.sh push && popd
