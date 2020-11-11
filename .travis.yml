@@ -9,8 +9,9 @@ env:
   global:
     # encrypted with: travis encrypt --pro -r cloudstateio/go-support DEPLOY_DOCS_TOKEN=<token>
     - secure: "L1uMy3mR5U+0HFmjJwSD6i/av667T187DkzIlRwfTnEGPG6LoZ5EwyGC/IxbKbV2EyUmxt7zDO+OXvsiZx0l0mXZ5ozAKdTB7eb/ujhinwnvB82OtKu8ejvZqI0ooPO+D1RlxqZF5HCX69L0DfTjhytkqLUIlN4CTtSO4ElJ/1Ottg0c3qiNUYvNdFqsKsF7Dq7EJU8G/vZ6o1WCUJzawLshOGDQ9jSL14QnKquFr/cMXHcg3GgiPVl2NFWAld0fOuNpYqUy2X3O7V4/FOJGe+btOao4xQyVsn9V/1VFsqRCyp1uy+kPbQbA0f+fBY3CnDpLKHrhYv8TDdfP9tbUEIhGikc+aqYeGOP6+4vPK/Xi/p2pZEZErPcBfc7CoJECNG4csMjq0GGdhp6UYJO1JPMVrLFZsWLoxPiXTkreQ+Gj4+Jgia20xfcUR/tkZrCQMnkySfFPHK48g2VOadfIZNz6hbdMGrZUarMrWC/hi3DIUdoT0Wn6y5LuP8goAbIBI/+KXvECIdiqTHu7WIwtdesTIZJvHhdp44zec8Teb0Bo6uYoIrKXvfTQbgvTzMzZO8DZ1L21OL7EKD9H6rvFabZXz5I2i9695Q6gkQYmK6Twg6CK1p/aZXmJWN8QXceXPavl3iNvC2fMSFxZvHBuqAjknCQlmTH7/BKyEw5AQ/Q="
-      # Docker hub password; encrypted with: travis encrypt --pro -r cloudstateio/go-support DOCKER_PASSWORD={password}
+    # Docker hub password; encrypted with: travis encrypt --pro -r cloudstateio/go-support DOCKER_PASSWORD={password}
     - secure: "OMwsvgBLGl+804bEIo9UigU9EDz3jnKR3oCkowbzfeT+yGb/aGqUFBBBw6fzruaB3h8Uyhe1wQUgAOwEE7xMQmNhKvHEYW0esQZQHmGeUgyCyeelh5U7iamivokXnCx2zhRj+kgd4gQE+RCunhqDcHNXGxDEf1GmQ0U/HAYVNyt6jEOVEEqb0UiG0NkTO6wRcw5fJsNrb1kPRHBM5OkoVlSNwu90kVlDgo/MPbEaNw1qkx52cA1FrTuBap4sHZNXs4BRFAoIivJNrHhrjiz41jdblcmBPLnL6hkGUguJKCBTxyuKInRKI4/grU47yg/0KNqjGOOF1MZcNbp1e09vZ1TDLHxYj4Qy3hclJTrpemcT5xdoud4nsIVyAFstR1xm2J6iKNJ+qz85wWYhxfgk8o3MJFepYqEZsNaDfGd/lWHYRXml5UJwlwA5eG/D6Q6CKn4qF1DUn5+yLgsO73MQ1qAMADgp1dhkhHELcs94w8GOWCvaNy7Zt4fKpEOLc1ThCnKQYjXQ3zOsEcciuoYtK0QxgaqpHgnvNZcZOB3H/iBkdnNW3YaQUl2+4Ooq/JmYissj6GXD1NbP5xNCEThFCGsroHm6OAJRM3BaWmna6DBworwg+lr6PMyn9fVhbOJKaH5wdfwQXOFwQ798rxK6n/oZVIBSztHhY29JNCZMtoo="
+
 jobs:
   include:
     - stage: build
@@ -25,19 +26,14 @@ jobs:
       name: tck verification
       script:
         - cd tck && ./run_tck.sh
-    - stage: deploy docs
-      name: deploy release docs to cloudstate.io
-      if: tag =~ ^v
-      language: scala
-      script: cd docs && sbt deploy
-    - stage: deploy docs
-      name: deploy snapshot docs to cloudstate.io
-      if: branch = master AND type = push
-      language: scala
-      script: cd docs && sbt deploy
-    - stage: deploy devcontainer image
-      name: deploy devcontainer image to dockerhub
-      if: branch = master AND type = push
-      script:
-        - echo "$DOCKER_PASSWORD" | docker login -u cloudstatebot --password-stdin
-        - pushd . && cd .devcontainer && ./build.sh push && popd
+    - stage: validate_docs
+      script: make -C docs
+    - stage: deploy_docs
+      if: repo = cloudstateio/go-support AND tag =~ ^v
+      script: make -C docs deploy
+#    - stage: deploy devcontainer image
+#      name: deploy devcontainer image to dockerhub
+#      if: branch = master AND type = push
+#      script:
+#        - echo "$DOCKER_PASSWORD" | docker login -u cloudstatebot --password-stdin
+#        - pushd . && cd .devcontainer && ./build.sh push && popd
