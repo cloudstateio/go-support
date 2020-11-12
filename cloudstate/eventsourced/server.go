@@ -36,6 +36,8 @@ type Server struct {
 	mu sync.RWMutex
 	// entities are indexed by their service name.
 	entities map[ServiceName]*Entity
+
+	entity.UnimplementedEventSourcedServer
 }
 
 // NewServer returns a new event sourced server.

@@ -33,6 +33,8 @@ type Server struct {
 	mu sync.RWMutex
 	// entities has descriptions of entities registered by service names
 	entities map[ServiceName]*Entity
+
+	entity.UnimplementedCrdtServer
 }
 
 // NewServer returns an initialized Server.
