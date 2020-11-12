@@ -45,6 +45,8 @@ type EntityDiscoveryServer struct {
 	mu                sync.RWMutex
 	fileDescriptorSet *filedescr.FileDescriptorSet
 	entitySpec        *protocol.EntitySpec
+
+	protocol.UnimplementedEntityDiscoveryServer
 }
 
 // NewServer returns a new and initialized EntityDiscoveryServer.
