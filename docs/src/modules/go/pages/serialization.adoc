@@ -47,7 +47,7 @@ The main reason not to support it is, that an `int` is not the same type as an `
 
 == JSON
 
-Cloudstate uses the standard library package https://golang.org/pkg/encoding/json/[`encoding/json`] to serialize JSON.
+Cloudstate uses the standard library package https://pkg.go.dev/encoding/json[`encoding/json`] to serialize JSON.
 Any type that has a field declared with a string literal tag `json:"fieldname"` will be serialized to and from JSON using the https://golang.org/pkg/encoding/json/#Marshal[Marshaller and Unmarshaller] from the Go standard library package `encoding/json`.
 
 The details of how these are serialized can be found xref:contribute:serialization.adoc#json-values[here].
