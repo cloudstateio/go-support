@@ -12,7 +12,7 @@ An event sourced entity can be created by implementing the {cloudstate-go-lib-ap
 include::example$cloudstate/eventsourced/entity.go[tag=entity-type]
 ----
 
-Then register that entity with {cloudstate-go-lib-api-base}/cloudstate/cloudstate#RegisterEventSourced[`cloudstate.CloudState.RegisterEventSourced`], your entity gets configured to be an event sourced entity and handled by the Cloudstate instance from now on.
+Then register that entity with {cloudstate-go-lib-api-base}/cloudstate#CloudState.RegisterEventSourced[`cloudstate.CloudState.RegisterEventSourced`], your entity gets configured to be an event sourced entity and handled by the Cloudstate instance from now on.
 
 [source,go]
 ----
@@ -83,7 +83,7 @@ include::example$example/shoppingcart/entity.go[tag=entity-func]
 
 == Handling commands
 
-An event sourced entity implements the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`] interface and there for command handling the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#HandleCommand[`HandleCommand`] method.
+An event sourced entity implements the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`] interface and there for command handling the `HandleCommand` method.
 The command types received by an event sourced entity are declared by the gRPC Server interface which is generated from the protobuf definitions.
 The Cloudstate Go Support library together with the registered `eventsourced.Entity` is then able to dispatch commands it gets from the Cloudstate proxy.
 
@@ -110,8 +110,8 @@ Commands that modify the state may do so by emitting events.
 WARNING: The *only* way a command handler may modify its state is by emitting an event.
 Any modifications made directly to the state from the command handler will not be persisted, and when the entity is passivated and next reloaded, those modifications will not be present.
 
-A command handler may emit an event by using the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Context[`eventsourced.Context`] and invoking the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Emit[`Emit`] method on it.
-Calling {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Emit[`Emit`] will immediately invoke the associated event handler for that event - this both validates that the event can be applied to the current state, as well as updates the state so that subsequent processing in the command handler can use it.
+A command handler may emit an event by using the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Context[`eventsourced.Context`] and invoking the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Context.Emit[`Emit`] method on it.
+Calling {cloudstate-go-lib-api-base}/cloudstate/eventsourced#Context.Emit[`Emit`] will immediately invoke the associated event handler for that event - this both validates that the event can be applied to the current state, as well as updates the state so that subsequent processing in the command handler can use it.
 
 Here's an example of a command handler that emits an event:
 
@@ -129,7 +129,7 @@ Event handlers are invoked at two points, when restoring entities from the journ
 An event handler's responsibility is to update the state of the entity according to the event.
 Event handlers are the only place where it's safe to mutate the state of the entity at all.
 
-Every event sourced entity implements the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`]s interface {cloudstate-go-lib-api-base}/cloudstate/eventsourced#HandleEvent[`HandleEvent`] method.
+Every event sourced entity implements the {cloudstate-go-lib-api-base}/cloudstate/eventsourced#EntityHandler[`eventsourced.EntityHandler`]s interface `HandleEvent` method.
 Events emitted by command handlers get dispatched to the implemented event handler which then decides how to proceed with the event.
 
 [source,go]

@@ -243,7 +243,7 @@ func TestEventsourcingShoppingCart(t *testing.T) {
 			t.Fatal(errors.New("expected error"))
 		}
 		if err != io.EOF {
-			t.Fatal(errors.New("expected io.EOF error"))
+			t.Fatalf("expected io.EOF error but got: %v", err)
 		}
 	})
 
