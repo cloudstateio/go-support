@@ -14,7 +14,7 @@ include::example$cloudstate/crdt/entity.go[tag=entity-handler]
 
 == Accessing and creating an entity's CRDT
 
-Each CRDT entity manages one root CRDT. That CRDT will either be supplied to the entity by the proxy when it is started through {cloudstate-go-lib-api-base}/cloudstate/crdt#EntityHandler.Set[`crdt.EntityHandler.Set`], or, if no CRDT exists for the entity when it is started, it has to be created by the entity using the {cloudstate-go-lib-api-base}/cloudstate/crdt#EntityHandler.Default[`crdt.EntityHandler.Default`] factory method.
+Each CRDT entity manages one root CRDT. That CRDT will either be supplied to the entity by the proxy when it is started through {cloudstate-go-lib-api-base}/cloudstate/crdt#EntityHandler[`crdt.EntityHandler.Set`], or, if no CRDT exists for the entity when it is started, it has to be created by the entity using the {cloudstate-go-lib-api-base}/cloudstate/crdt#EntityHandler[`crdt.EntityHandler.Default`] factory method.
 
 [source,go]
 ----
@@ -30,7 +30,7 @@ In this regard, a type assertion check is not necessary.
 
 == Handling commands
 
-Command handlers are implemented with the {cloudstate-go-lib-api-base}/cloudstate/crdt#EntityHandler.HandleCommand[`crdt.EntityHandler.HandleCommand`] method.
+Command handlers are implemented with the {cloudstate-go-lib-api-base}/cloudstate/crdt#EntityHandler[`crdt.EntityHandler.HandleCommand`] method.
 The command handler provides a `CommandContext`, a commands `name`, and the gRPCs message as a protobuf message.
 The matching combination of a commands name and the messages type from the defined gRPC service can be used to handle the command.
 So to handle the shopping cart service method `GetCart`:
@@ -115,7 +115,7 @@ include::example$example/crdt_shoppingcart/shoppingcart/entity.go[tag=watch-cart
 
 === Ending the stream
 
-The `ChangeFunc` handler function can end the stream by invoking {cloudstate-go-lib-api-base}/cloudstate/crdt#CommandContext.EndStream[`crdt.CommandContext.EndStream`] on the `CommandCOntext` it is passed.
+The `ChangeFunc` handler function can end the stream by invoking {cloudstate-go-lib-api-base}/cloudstate/crdt#CommandContext.EndStream[`crdt.CommandContext.EndStream`] on the `CommandContext` it is passed.
 If it does this, it will not receive an cancellation callback.
 
 === Responding to stream cancellation

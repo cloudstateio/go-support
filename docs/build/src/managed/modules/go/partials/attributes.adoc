@@ -1,1 +1,1 @@
-:cloudstate-go-lib-version: 0.2.0
+:cloudstate-go-lib-version: 0.2.1
