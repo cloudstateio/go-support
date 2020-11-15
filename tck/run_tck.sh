@@ -7,7 +7,7 @@ function rnd() {
 
 FUNC_IMAGE=${1:-cloudstateio/cloudstate-go-tck:latest}
 FUNC="cloudstate-function-$(rnd)"
-PROXY_IMAGE=${2:-cloudstateio/cloudstate-proxy-dev-mode:latest}
+PROXY_IMAGE=${2:-cloudstateio/cloudstate-proxy-core:latest}
 PROXY="cloudstate-proxy-$(rnd)"
 TCK_IMAGE=${3:-cloudstateio/cloudstate-tck:latest}
 TCK="cloudstate-tck-$(rnd)"
@@ -21,7 +21,7 @@ set -x
 
 # run the function and the proxy
 docker run -d --name "$FUNC" --net=host "${FUNC_IMAGE}" || exit $?
-docker run -d --name "$PROXY" --net=host -e USER_FUNCTION_PORT=8090 "${PROXY_IMAGE}" || exit $?
+docker run -d --name "$PROXY" --net=host -e USER_FUNCTION_PORT=8090 "${PROXY_IMAGE}" -Dconfig.resource=dev-mode.conf || exit $?
 
 # run the tck
 docker run --rm --name $TCK --net=host "${TCK_IMAGE}"
