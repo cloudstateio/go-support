@@ -18,6 +18,5 @@ package protocol
 const (
 	EventSourced = "cloudstate.eventsourced.EventSourced"
 	CRDT         = "cloudstate.crdt.Crdt"
+	Action       = "cloudstate.action.ActionProtocol"
 )
-
-//_go:generate sh -c "protoc -I../../vendor/proto/api-common-protos -I ../.. internal/server/proto/server.proto --go_out=plugins=grpc:../.."
