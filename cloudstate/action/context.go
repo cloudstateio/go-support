@@ -1,3 +1,18 @@
+//
+// Copyright 2019 Lightbend Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package action
 
 import (
@@ -22,10 +37,11 @@ type Context struct {
 	command  *entity.ActionCommand
 	metadata *protocol.Metadata
 
-	close       CloseFunc
-	cancelled   CancellationFunc
-	respond     RespondFunc
-	cancel      bool
+	respond RespondFunc
+	cancel  CancelFunc
+	close   CloseFunc
+
+	cancelled   bool
 	reply       *any.Any
 	forward     *protocol.Forward
 	failure     error
@@ -33,23 +49,23 @@ type Context struct {
 }
 
 type CloseFunc func(c *Context) error
-type CancellationFunc func(c *Context) error
+type CancelFunc func(c *Context) error
 type RespondFunc func(c *Context) error
 
-func (c *Context) Cancel() {
-	c.cancel = true
+func (c *Context) RespondFunc(respond RespondFunc) {
+	c.respond = respond
 }
 
 func (c *Context) CloseFunc(close CloseFunc) {
 	c.close = close
 }
 
-func (c *Context) CancellationFunc(cancel CancellationFunc) {
-	c.cancelled = cancel
+func (c *Context) CancellationFunc(cancel CancelFunc) {
+	c.cancel = cancel
 }
 
-func (c *Context) RespondFunc(respond RespondFunc) {
-	c.respond = respond
+func (c *Context) Cancel() {
+	c.cancelled = true
 }
 
 func (c *Context) Command() *entity.ActionCommand {

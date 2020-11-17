@@ -1,3 +1,18 @@
+//
+// Copyright 2019 Lightbend Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package action
 
 import (
@@ -50,29 +65,35 @@ func (s *Server) Register(e *Entity) error {
 	return nil
 }
 
+func (s *Server) entityFor(service ServiceName) (*Entity, error) {
+	s.mu.RLock()
+	e, ok := s.entities[service]
+	s.mu.RUnlock()
+	if !ok {
+		return e, fmt.Errorf("unknown service: %q", service)
+	}
+	return e, nil
+}
+
 type runner struct {
 	context  *Context
 	response *entity.ActionResponse
 }
 
 func (s *Server) HandleUnary(ctx context.Context, command *entity.ActionCommand) (*entity.ActionResponse, error) {
-	serviceName := ServiceName(command.ServiceName)
-	s.mu.RLock()
-	e, ok := s.entities[serviceName]
-	s.mu.RUnlock()
-	if !ok {
-		return nil, fmt.Errorf("received command for an unknown service: %q", serviceName)
+	e, err := s.entityFor(ServiceName(command.ServiceName))
+	if err != nil {
+		return nil, err
 	}
-	c := &Context{
+	r := runner{context: &Context{
 		Entity:      e,
 		Instance:    e.EntityFunc(),
 		ctx:         ctx,
 		command:     command,
 		metadata:    command.Metadata,
 		sideEffects: make([]*protocol.SideEffect, 0),
-	}
-	r := runner{context: c}
-	err := c.runCommand(command)
+	}}
+	err = r.context.runCommand(command)
 	if err != nil && !errors.Is(err, protocol.ClientError{}) {
 		return nil, err
 	}
@@ -87,22 +108,18 @@ func (s *Server) HandleStreamedIn(stream entity.ActionProtocol_HandleStreamedInS
 	if err != nil {
 		return err
 	}
-	serviceName := ServiceName(first.ServiceName)
-	s.mu.RLock()
-	e, ok := s.entities[serviceName]
-	s.mu.RUnlock()
-	if !ok {
-		return fmt.Errorf("received command for an unknown service: %q", serviceName)
+	e, err := s.entityFor(ServiceName(first.ServiceName))
+	if err != nil {
+		return err
 	}
-	c := &Context{
+	r := runner{context: &Context{
 		Entity:      e,
 		Instance:    e.EntityFunc(),
 		ctx:         stream.Context(),
 		command:     first,
 		metadata:    first.Metadata,
 		sideEffects: make([]*protocol.SideEffect, 0),
-	}
-	r := runner{context: c}
+	}}
 	for {
 		command, err := stream.Recv()
 		if err == io.EOF {
@@ -130,33 +147,27 @@ func (s *Server) HandleStreamedIn(stream entity.ActionProtocol_HandleStreamedInS
 			r.context.failure = err
 		}
 	}
-	return nil
 }
 
 func (s *Server) HandleStreamedOut(command *entity.ActionCommand, stream entity.ActionProtocol_HandleStreamedOutServer) error {
-	serviceName := ServiceName(command.ServiceName)
-	s.mu.RLock()
-	e, ok := s.entities[serviceName]
-	s.mu.RUnlock()
-	if !ok {
-		return fmt.Errorf("received command for an unknown service: %q", serviceName)
+	e, err := s.entityFor(ServiceName(command.ServiceName))
+	if err != nil {
+		return err
 	}
-	c := &Context{
+	r := runner{context: &Context{
 		Entity:      e,
 		Instance:    e.EntityFunc(),
 		ctx:         stream.Context(),
 		command:     command,
 		metadata:    command.Metadata,
 		sideEffects: make([]*protocol.SideEffect, 0),
-	}
-	r := runner{context: c}
+	}}
 	r.context.RespondFunc(func(c *Context) error {
 		response, err := r.actionResponse()
 		if err != nil {
 			return err
 		}
-		err = stream.Send(response)
-		if err != nil {
+		if err = stream.Send(response); err != nil {
 			return err
 		}
 		r.response = nil
@@ -167,11 +178,10 @@ func (s *Server) HandleStreamedOut(command *entity.ActionCommand, stream entity.
 		return nil
 	})
 	for {
-		err := r.context.runCommand(command)
-		if err != nil {
+		if err := r.context.runCommand(command); err != nil {
 			r.context.failure = err
 		}
-		if r.context.cancel {
+		if r.context.cancelled {
 			return nil
 		}
 	}
@@ -182,22 +192,18 @@ func (s *Server) HandleStreamed(stream entity.ActionProtocol_HandleStreamedServe
 	if err != nil {
 		return err
 	}
-	serviceName := ServiceName(first.ServiceName)
-	s.mu.RLock()
-	e, ok := s.entities[serviceName]
-	s.mu.RUnlock()
-	if !ok {
-		return fmt.Errorf("received command for an unknown service: %q", serviceName)
+	e, err := s.entityFor(ServiceName(first.ServiceName))
+	if err != nil {
+		return err
 	}
-	c := &Context{
+	r := runner{context: &Context{
 		Entity:      e,
 		Instance:    e.EntityFunc(),
 		ctx:         stream.Context(),
 		command:     first,
 		metadata:    first.Metadata,
 		sideEffects: make([]*protocol.SideEffect, 0),
-	}
-	r := runner{context: c}
+	}}
 	r.context.RespondFunc(func(c *Context) error {
 		response, err := r.actionResponse()
 		if err != nil {
@@ -229,9 +235,9 @@ func (s *Server) HandleStreamed(stream entity.ActionProtocol_HandleStreamedServe
 		if err != nil {
 			return err
 		}
-		command.ServiceName = c.command.ServiceName
-		command.Name = c.command.Name
-		command.Metadata = c.command.Metadata
+		command.ServiceName = r.context.command.ServiceName
+		command.Name = r.context.command.Name
+		command.Metadata = r.context.command.Metadata
 		err = r.context.runCommand(command)
 		if err != nil {
 			r.context.failure = err
@@ -262,6 +268,7 @@ func (r *runner) actionResponse() (*entity.ActionResponse, error) {
 		}, nil
 	}
 	if r.context.forward != nil {
+		r.context.forward.Metadata = r.context.command.Metadata
 		return &entity.ActionResponse{
 			Response: &entity.ActionResponse_Forward{
 				Forward: r.context.forward,
