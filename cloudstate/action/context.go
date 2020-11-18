@@ -27,6 +27,10 @@ import (
 	"github.com/golang/protobuf/ptypes/any"
 )
 
+type CloseFunc func(c *Context) error
+type CancelFunc func(c *Context) error
+type RespondFunc func(c *Context) error
+
 type Context struct {
 	// Entity describes the instance that is used as an entity.
 	Entity *Entity
@@ -48,9 +52,21 @@ type Context struct {
 	sideEffects []*protocol.SideEffect
 }
 
-type CloseFunc func(c *Context) error
-type CancelFunc func(c *Context) error
-type RespondFunc func(c *Context) error
+func (c *Context) RespondWith(reply *any.Any) {
+	c.forward = nil
+	c.failure = nil
+	c.reply = reply
+}
+
+func (c *Context) Forward(forward *protocol.Forward) {
+	c.forward = forward
+	c.failure = nil
+	c.reply = nil
+}
+
+func (c *Context) SideEffect(effect *protocol.SideEffect) {
+	c.sideEffects = append(c.sideEffects, effect)
+}
 
 func (c *Context) RespondFunc(respond RespondFunc) {
 	c.respond = respond
@@ -74,22 +90,6 @@ func (c *Context) Command() *entity.ActionCommand {
 
 func (c *Context) Metadata() *protocol.Metadata {
 	return c.metadata
-}
-
-func (c *Context) Forward(forward *protocol.Forward) {
-	c.forward = forward
-	c.failure = nil
-	c.reply = nil
-}
-
-func (c *Context) SideEffect(effect *protocol.SideEffect) {
-	c.sideEffects = append(c.sideEffects, effect)
-}
-
-func (c *Context) RespondWith(reply *any.Any) {
-	c.forward = nil
-	c.failure = nil
-	c.reply = reply
 }
 
 func (c *Context) Response() *any.Any {

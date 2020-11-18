@@ -10,10 +10,12 @@ protoc --go-grpc_out=paths=source_relative:. --proto_path=protobuf/frontend/ clo
 protoc --go_out=paths=source_relative:. --proto_path=protobuf/frontend/ cloudstate/entity_key.proto
 protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol --proto_path=protobuf/protocol/cloudstate crdt.proto
 protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol --proto_path=protobuf/protocol/cloudstate crdt.proto
-protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate action.proto
-protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate action.proto
 protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate event_sourced.proto
 protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate event_sourced.proto
+protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate action.proto
+protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate action.proto
+protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate value_entity.proto
+protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate value_entity.proto
 
 # TCK CRDT
 protoc --go-grpc_out=paths=source_relative:./tck/crdt \
@@ -45,7 +47,7 @@ protoc --go_out=paths=source_relative:./tck/eventsourced \
   --proto_path=protobuf/tck/cloudstate/tck/model \
   --proto_path=protobuf/tck eventsourced.proto
 
-  # TCK Action
+# TCK Action
 protoc --go-grpc_out=paths=source_relative:./tck/action \
   --proto_path=protobuf/protocol \
   --proto_path=protobuf/frontend \
