@@ -24,6 +24,7 @@ import (
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/cloudstateio/go-support/cloudstate/value"
 	"github.com/cloudstateio/go-support/example/shoppingcart"
+	tck_value "github.com/cloudstateio/go-support/example/valueentity"
 	actionTCK "github.com/cloudstateio/go-support/tck/action"
 	tck "github.com/cloudstateio/go-support/tck/eventsourced"
 	valueentity "github.com/cloudstateio/go-support/tck/value"
@@ -114,6 +115,18 @@ func main() {
 		PersistenceID: "value-entity-tck-model-two",
 	}, protocol.DescriptorConfig{
 		Service: "tck_valueentity.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+
+	// value entity ShoppingCart
+	err = server.RegisterValueEntity(&value.Entity{
+		ServiceName:   "com.example.valueentity.shoppingcart.ShoppingCart",
+		EntityFunc:    tck_value.NewShoppingCart,
+		PersistenceID: "shopping-cart",
+	}, protocol.DescriptorConfig{
+		Service: "value_shoppingcart.proto",
 	})
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %s", err)

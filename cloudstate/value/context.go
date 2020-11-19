@@ -130,7 +130,7 @@ func (c *Context) entityReply(command *protocol.Command, reply *any.Any) *entity
 			SideEffects: c.sideEffects,
 		}
 	}
-	panic("we should have sent something at this point")
+	return nil
 }
 
 func (c *Context) runCommand(cmd *protocol.Command) (*any.Any, error) {
