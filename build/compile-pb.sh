@@ -63,6 +63,22 @@ protoc --go_out=paths=source_relative:./tck/action \
   --proto_path=protobuf/tck/cloudstate/tck/model \
   --proto_path=protobuf/tck tck_action.proto
 
+# TCK Value Entity
+protoc --go-grpc_out=paths=source_relative:./tck/value_entity \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=protobuf/tck/cloudstate/tck/model \
+  --proto_path=protobuf/tck tck_valueentity.proto
+protoc --go_out=paths=source_relative:./tck/value_entity \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=protobuf/tck/cloudstate/tck/model \
+  --proto_path=protobuf/tck tck_valueentity.proto
+
 # CRDT shopping cart example
 protoc --go-grpc_out=paths=source_relative:./example/crdt_shoppingcart/shoppingcart --proto_path=protobuf/protocol \
   --proto_path=protobuf/frontend \

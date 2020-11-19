@@ -28,6 +28,7 @@ import (
 	"github.com/cloudstateio/go-support/cloudstate/entity"
 	"github.com/cloudstateio/go-support/cloudstate/eventsourced"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
+	"github.com/cloudstateio/go-support/cloudstate/value"
 	"google.golang.org/grpc"
 )
 
@@ -38,6 +39,7 @@ type CloudState struct {
 	eventSourcedServer    *eventsourced.Server
 	crdtServer            *crdt.Server
 	actionServer          *action.Server
+	valueServer           *value.Server
 }
 
 // New returns a new CloudState instance.
@@ -48,10 +50,12 @@ func New(c protocol.Config) (*CloudState, error) {
 		eventSourcedServer:    eventsourced.NewServer(),
 		crdtServer:            crdt.NewServer(),
 		actionServer:          action.NewServer(),
+		valueServer:           value.NewServer(),
 	}
 	protocol.RegisterEntityDiscoveryServer(cs.grpcServer, cs.entityDiscoveryServer)
 	entity.RegisterEventSourcedServer(cs.grpcServer, cs.eventSourcedServer)
 	entity.RegisterCrdtServer(cs.grpcServer, cs.crdtServer)
+	entity.RegisterValueEntityServer(cs.grpcServer, cs.valueServer)
 	entity.RegisterActionProtocolServer(cs.grpcServer, cs.actionServer)
 	return cs, nil
 }
@@ -84,6 +88,17 @@ func (cs *CloudState) RegisterAction(entity *action.Entity, config protocol.Desc
 		return err
 	}
 	if err := cs.entityDiscoveryServer.RegisterActionEntity(entity, config); err != nil {
+		return err
+	}
+	return nil
+}
+
+// RegisterValueEntity registers a Value entity.
+func (cs *CloudState) RegisterValueEntity(entity *value.Entity, config protocol.DescriptorConfig) error {
+	if err := cs.valueServer.Register(entity); err != nil {
+		return err
+	}
+	if err := cs.entityDiscoveryServer.RegisterValueEntity(entity, config); err != nil {
 		return err
 	}
 	return nil

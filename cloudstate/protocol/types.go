@@ -19,4 +19,5 @@ const (
 	EventSourced = "cloudstate.eventsourced.EventSourced"
 	CRDT         = "cloudstate.crdt.Crdt"
 	Action       = "cloudstate.action.ActionProtocol"
+	Value        = "cloudstate.valueentity.ValueEntity"
 )

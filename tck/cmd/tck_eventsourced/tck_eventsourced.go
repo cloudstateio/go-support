@@ -22,9 +22,11 @@ import (
 	"github.com/cloudstateio/go-support/cloudstate/action"
 	"github.com/cloudstateio/go-support/cloudstate/eventsourced"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
+	"github.com/cloudstateio/go-support/cloudstate/value"
 	"github.com/cloudstateio/go-support/example/shoppingcart"
 	actionTCK "github.com/cloudstateio/go-support/tck/action"
 	tck "github.com/cloudstateio/go-support/tck/eventsourced"
+	valueentity "github.com/cloudstateio/go-support/tck/value_entity"
 )
 
 // tag::shopping-cart-main[]
@@ -75,6 +77,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}
+	// end::event-sourced-entity-type[]
 
 	err = server.RegisterAction(&action.Entity{
 		ServiceName: "cloudstate.tck.model.action.ActionTckModel",
@@ -95,9 +98,27 @@ func main() {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}
 
-	// ServiceName: "cloudstate.tck.model.action.ActionTwo",
+	err = server.RegisterValueEntity(&value.Entity{
+		ServiceName:   "cloudstate.tck.model.valueentity.ValueEntityTckModel",
+		EntityFunc:    valueentity.NewValueEntityTckModelEntity,
+		PersistenceID: "value-entity-tck-model",
+	}, protocol.DescriptorConfig{
+		Service: "tck_valueentity.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+	err = server.RegisterValueEntity(&value.Entity{
+		ServiceName:   "cloudstate.tck.model.valueentity.ValueEntityTwo",
+		EntityFunc:    valueentity.NewValueEntityTckModelEntityTwo,
+		PersistenceID: "value-entity-tck-model-two",
+	}, protocol.DescriptorConfig{
+		Service: "tck_valueentity.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
 
-	// end::event-sourced-entity-type[]
 	err = server.Run()
 	if err != nil {
 		log.Fatalf("Cloudstate failed to run: %v", err)
