@@ -26,7 +26,7 @@ import (
 	"github.com/cloudstateio/go-support/example/shoppingcart"
 	actionTCK "github.com/cloudstateio/go-support/tck/action"
 	tck "github.com/cloudstateio/go-support/tck/eventsourced"
-	valueentity "github.com/cloudstateio/go-support/tck/value_entity"
+	valueentity "github.com/cloudstateio/go-support/tck/value"
 )
 
 // tag::shopping-cart-main[]
