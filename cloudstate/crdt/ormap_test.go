@@ -33,51 +33,10 @@ func TestORMap(t *testing.T) {
 			t.Fatal("m.Delta() is not nil but should")
 		}
 		m.resetDelta()
-		if got, want := len(encDecState(m.State()).GetOrmap().Entries), 0; got != want {
+		m.Entries()
+		// if got, want := len(encDecState(m.State()).GetOrmap().Entries), 0; got != want {
+		if got, want := len(m.Entries()), 0; got != want {
 			t.Fatalf("got: %v; want: %v", got, want)
-		}
-	})
-	t.Run("should reflect a state update", func(t *testing.T) {
-		m := NewORMap()
-		if err := m.applyState(encDecState(
-			&entity.CrdtState{
-				State: &entity.CrdtState_Ormap{
-					Ormap: &entity.ORMapState{
-						Entries: append(make([]*entity.ORMapEntry, 0),
-							&entity.ORMapEntry{
-								Key: encoding.String("one"),
-								Value: (&GCounter{
-									value: 5,
-								}).State(),
-							},
-							&entity.ORMapEntry{
-								Key: encoding.String("two"),
-								Value: (&GCounter{
-									value: 7,
-								}).State(),
-							},
-						),
-					},
-				},
-			},
-		)); err != nil {
-			t.Fatal(err)
-		}
-		if got, want := m.Size(), 2; got != want {
-			t.Fatalf("got: %v; want: %v", got, want)
-		}
-		if got, want := m.Get(encoding.String("one")).State().GetGcounter().Value, uint64(5); got != want {
-			t.Fatalf("got: %v; want: %v", got, want)
-		}
-		if got, want := m.Get(encoding.String("two")).State().GetGcounter().Value, uint64(7); got != want {
-			t.Fatalf("got: %v; want: %v", got, want)
-		}
-		if d := m.Delta(); d != nil {
-			t.Fatalf("m.Delta(): %v; want: %v", d, nil)
-		}
-		m.resetDelta()
-		if l := len(encDecState(m.State()).GetOrmap().Entries); l != 2 {
-			t.Fatalf("len(map.Entries): %v; want: %v", l, 2)
 		}
 	})
 	t.Run("should generate an add delta", func(t *testing.T) {
@@ -98,7 +57,8 @@ func TestORMap(t *testing.T) {
 		if k := encoding.DecodeString(entry.GetKey()); k != "one" {
 			t.Fatalf("key: %v; want: %v", k, "one")
 		}
-		if v := entry.GetValue().GetGcounter().GetValue(); v != 0 {
+		// if v := entry.GetValue().GetGcounter().GetValue(); v != 0 {
+		if v := entry.GetDelta().GetGcounter().GetIncrement(); v != 0 {
 			t.Fatalf("GCounter.Value: %v; want: %v", v, 0)
 		}
 		if d := m.Delta(); d != nil {
@@ -123,7 +83,7 @@ func TestORMap(t *testing.T) {
 		if k := encoding.DecodeString(entry2.GetKey()); k != "two" {
 			t.Fatalf("key: %v; want: %v", k, "two")
 		}
-		if v := entry2.GetValue().GetGcounter().GetValue(); v != 10 {
+		if v := entry2.GetDelta().GetGcounter().GetIncrement(); v != 10 {
 			t.Fatalf("GCounter.Value: %v; want: %v", v, 10)
 		}
 		if d := m.Delta(); d != nil {
@@ -348,12 +308,12 @@ func TestORMap(t *testing.T) {
 		m.resetDelta()
 		err := m.applyDelta(encDecDelta(&entity.CrdtDelta{
 			Delta: &entity.CrdtDelta_Ormap{Ormap: &entity.ORMapDelta{
-				Added: append(make([]*entity.ORMapEntry, 0), &entity.ORMapEntry{
+				Added: append(make([]*entity.ORMapEntryDelta, 0), &entity.ORMapEntryDelta{
 					Key: encoding.String("two"),
-					Value: &entity.CrdtState{
-						State: &entity.CrdtState_Gcounter{
-							Gcounter: &entity.GCounterState{
-								Value: 4,
+					Delta: &entity.CrdtDelta{
+						Delta: &entity.CrdtDelta_Gcounter{
+							Gcounter: &entity.GCounterDelta{
+								Increment: 4,
 							},
 						},
 					},
@@ -380,7 +340,8 @@ func TestORMap(t *testing.T) {
 			t.Fatalf("m.Delta(): %v; want: %v", d, nil)
 		}
 		m.resetDelta()
-		if l := len(encDecState(m.State()).GetOrmap().GetEntries()); l != 2 {
+		// if l := len(encDecState(m.State()).GetOrmap().GetEntries()); l != 2 {
+		if l := len(m.Entries()); l != 2 {
 			t.Fatalf("state entries len: %v; want: %v", l, 2)
 		}
 	})
@@ -408,7 +369,7 @@ func TestORMap(t *testing.T) {
 			t.Fatalf("m.Delta(): %v; want: %v", d, nil)
 		}
 		m.resetDelta()
-		if l := len(encDecState(m.State()).GetOrmap().GetEntries()); l != 1 {
+		if l := len(m.Entries()); l != 1 {
 			t.Fatalf("state entries len: %v; want: %v", l, 1)
 		}
 	})
@@ -433,7 +394,7 @@ func TestORMap(t *testing.T) {
 			t.Fatalf("m.Delta(): %v; want: %v", d, nil)
 		}
 		m.resetDelta()
-		if l := len(encDecState(m.State()).GetOrmap().GetEntries()); l != 0 {
+		if l := len(m.Entries()); l != 0 {
 			t.Fatalf("state entries len: %v; want: %v", l, 0)
 		}
 	})
@@ -506,7 +467,7 @@ func TestORMapAdditional(t *testing.T) {
 		s.Set(encoding.String("one"), NewFlag())
 		s.Set(encoding.String("two"), NewFlag())
 		s.Set(encoding.String("three"), NewFlag())
-		s.Values()
+		s.Entries()
 	})
 	t.Run("apply invalid delta", func(t *testing.T) {
 		s := NewORMap()
@@ -518,18 +479,6 @@ func TestORMapAdditional(t *testing.T) {
 			},
 		}); err == nil {
 			t.Fatal("ormap applyDelta should err but did not")
-		}
-	})
-	t.Run("apply invalid state", func(t *testing.T) {
-		s := NewORMap()
-		if err := s.applyState(&entity.CrdtState{
-			State: &entity.CrdtState_Flag{
-				Flag: &entity.FlagState{
-					Value: false,
-				},
-			},
-		}); err == nil {
-			t.Fatal("ormap applyState should err but did not")
 		}
 	})
 }

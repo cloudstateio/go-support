@@ -24,15 +24,6 @@ import (
 )
 
 func TestGset(t *testing.T) {
-	state := func(x []*any.Any) *entity.CrdtState {
-		return &entity.CrdtState{
-			State: &entity.CrdtState_Gset{
-				Gset: &entity.GSetState{
-					Items: x,
-				},
-			},
-		}
-	}
 	delta := func(x []*any.Any) *entity.CrdtDelta {
 		return &entity.CrdtDelta{
 			Delta: &entity.CrdtDelta_Gset{
@@ -51,33 +42,9 @@ func TestGset(t *testing.T) {
 		if s.HasDelta() {
 			t.Fatal("has delta but should not")
 		}
-		itemsLen := len(encDecState(s.State()).GetGset().GetItems())
+		itemsLen := len(s.Value())
 		if itemsLen != 0 {
 			t.Fatalf("len(items): %v; want: %v", itemsLen, 0)
-		}
-	})
-
-	t.Run("should reflect a state update", func(t *testing.T) {
-		s := NewGSet()
-		if err := s.applyState(state(append(make([]*any.Any, 0),
-			encoding.String("one"),
-			encoding.String("two")),
-		)); err != nil {
-			t.Fatal(err)
-		}
-		if size := s.Size(); size != 2 {
-			t.Fatalf("s.Size(): %v; want: %v", size, 2)
-		}
-		if !contains(s.Value(), "one", "two") {
-			t.Fatalf("set values should contain 'one' and 'two', but was: %v", s.Value())
-		}
-		delta := s.Delta()
-		if delta != nil {
-			t.Fatalf("set delta should be nil but was not: %+v", delta)
-		}
-		s.resetDelta()
-		if slen := len(encDecState(s.State()).GetGset().GetItems()); slen != 2 {
-			t.Fatalf("set state length: %v; want: %v", s.Size(), 2)
 		}
 	})
 
@@ -150,10 +117,9 @@ func TestGset(t *testing.T) {
 		if s.HasDelta() {
 			t.Fatalf("has delta but should not")
 		}
-		state := encDecState(s.State())
-
-		if len(state.GetGset().GetItems()) != 2 {
-			t.Fatalf("state.GetItems(): %v; want: %v", state.GetGset().GetItems(), 2)
+		state := s.Value()
+		if len(state) != 2 {
+			t.Fatalf("state.GetItems(): %v; want: %v", state, 2)
 		}
 	})
 
@@ -264,16 +230,5 @@ func TestGSetAdditional(t *testing.T) {
 			t.Fatal("gset applyDelta should err but did not")
 		}
 	})
-	t.Run("apply invalid state", func(t *testing.T) {
-		s := NewGSet()
-		if err := s.applyState(&entity.CrdtState{
-			State: &entity.CrdtState_Flag{
-				Flag: &entity.FlagState{
-					Value: false,
-				},
-			},
-		}); err == nil {
-			t.Fatal("gset applyState should err but did not")
-		}
-	})
+
 }

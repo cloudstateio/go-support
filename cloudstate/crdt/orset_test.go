@@ -24,25 +24,6 @@ import (
 )
 
 func TestORSet(t *testing.T) {
-	t.Run("should reflect a state update", func(t *testing.T) {
-		s := NewORSet()
-		err := s.applyState(
-			&entity.CrdtState{
-				State: &entity.CrdtState_Orset{
-					Orset: &entity.ORSetState{
-						Items: append(make([]*any.Any, 0), encoding.String("one"), encoding.String("two")),
-					},
-				},
-			},
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if s.Size() != 2 {
-			t.Fatalf("s.Size(): %v; want: %v", s.Size(), 2)
-		}
-	})
-
 	t.Run("should generate an add delta", func(t *testing.T) {
 		s := NewORSet()
 		s.Add(encoding.String("one"))
@@ -250,7 +231,8 @@ func TestORSet(t *testing.T) {
 		if s.HasDelta() {
 			t.Fatalf("set has delta")
 		}
-		stateLen := len(encDecState(s.State()).GetOrset().GetItems())
+		// stateLen := len(encDecState(s.State()).GetOrset().GetItems())
+		stateLen := len(s.Value())
 		if stateLen != 2 {
 			t.Fatalf("len(GetItems()): %v; want: %v", stateLen, 2)
 		}
@@ -273,7 +255,8 @@ func TestORSet(t *testing.T) {
 			t.Fatalf("s.Size(): %v; want: %v", s.Size(), 1)
 		}
 
-		if slen := len(encDecState(s.State()).GetOrset().GetItems()); slen != 1 {
+		// if slen := len(encDecState(s.State()).GetOrset().GetItems()); slen != 1 {
+		if slen := len(s.Value()); slen != 1 {
 			t.Fatalf("len(GetItems()): %v; want: %v", slen, 1)
 		}
 	})
@@ -295,7 +278,7 @@ func TestORSet(t *testing.T) {
 		if s.Size() != 0 {
 			t.Fatalf("s.Size(): %v; want: %v", s.Size(), 0)
 		}
-		if slen := len(encDecState(s.State()).GetOrset().GetItems()); slen != 0 {
+		if slen := len(s.Value()); slen != 0 {
 			t.Fatalf("len(GetItems()): %v; want: %v", slen, 0)
 		}
 	})
@@ -343,18 +326,6 @@ func TestORSetAdditional(t *testing.T) {
 			},
 		}); err == nil {
 			t.Fatal("orset applyDelta should err but did not")
-		}
-	})
-	t.Run("apply invalid state", func(t *testing.T) {
-		s := NewORSet()
-		if err := s.applyState(&entity.CrdtState{
-			State: &entity.CrdtState_Flag{
-				Flag: &entity.FlagState{
-					Value: false,
-				},
-			},
-		}); err == nil {
-			t.Fatal("orset applyState should err but did not")
 		}
 	})
 }

@@ -119,28 +119,6 @@ func (s ORSet) Removed() []*any.Any {
 	return val
 }
 
-func (s *ORSet) State() *entity.CrdtState {
-	return &entity.CrdtState{
-		State: &entity.CrdtState_Orset{
-			Orset: &entity.ORSetState{
-				Items: s.Value(),
-			},
-		},
-	}
-}
-
-func (s *ORSet) applyState(state *entity.CrdtState) error {
-	set := state.GetOrset()
-	if set == nil {
-		return fmt.Errorf("unable to delta state %v to ORSet", state)
-	}
-	s.value = make(map[uint64]*any.Any, len(set.GetItems()))
-	for _, a := range set.GetItems() {
-		s.value[s.hashAny(a)] = a
-	}
-	return nil
-}
-
 func (s *ORSet) Delta() *entity.CrdtDelta {
 	return &entity.CrdtDelta{
 		Delta: &entity.CrdtDelta_Orset{

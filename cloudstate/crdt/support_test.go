@@ -38,19 +38,6 @@ func contains(in []*any.Any, all ...string) bool {
 	return false
 }
 
-func encDecState(s *entity.CrdtState) *entity.CrdtState {
-	marshal, err := proto.Marshal(s)
-	if err != nil {
-		// we panic for convenience in test
-		panic(err)
-	}
-	out := &entity.CrdtState{}
-	if err := proto.Unmarshal(marshal, out); err != nil {
-		panic(err)
-	}
-	return out
-}
-
 func encDecDelta(s *entity.CrdtDelta) *entity.CrdtDelta {
 	marshal, err := proto.Marshal(s)
 	if err != nil {

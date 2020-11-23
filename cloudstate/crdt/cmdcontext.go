@@ -157,10 +157,15 @@ func (c *CommandContext) stateAction() *entity.CrdtStateAction {
 			c.crdt = nil
 			return nil
 		}
-		c.crdt.resetDelta()
-		return &entity.CrdtStateAction{
-			Action: &entity.CrdtStateAction_Create{Create: c.crdt.State()},
+		action := &entity.CrdtStateAction{
+			Action: &entity.CrdtStateAction_Update{
+				Update: &entity.CrdtDelta{
+					Delta: c.crdt.Delta().GetDelta(),
+				},
+			},
 		}
+		c.crdt.resetDelta()
+		return action
 	}
 	if c.created && c.deleted {
 		c.created = false

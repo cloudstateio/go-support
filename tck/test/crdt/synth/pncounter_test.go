@@ -47,7 +47,8 @@ func TestCRDTPNCounter(t *testing.T) {
 				var r crdt.PNCounterResponse
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
 				tr.expectedInt64(r.GetValue().GetValue(), 7)
-				tr.expectedInt64(m.Reply.GetStateAction().GetCreate().GetPncounter().GetValue(), 7)
+				// tr.expectedInt64(m.Reply.GetStateAction().GetCreate().GetPncounter().GetValue(), 7)
+				tr.expectedInt64(m.Reply.GetStateAction().GetUpdate().GetPncounter().GetChange(), 7)
 			default:
 				tr.unexpected(m)
 			}
@@ -80,21 +81,6 @@ func TestCRDTPNCounter(t *testing.T) {
 				tr.unexpected(m)
 			}
 		})
-		t.Run("the counter should apply new state and return its value", func(t *testing.T) {
-			tr := tester{t}
-			p.state(&entity.PNCounterState{Value: 49})
-			switch m := p.command(
-				entityID, command, pncounterRequest(&crdt.Get{Key: entityID}),
-			).Message.(type) {
-			case *entity.CrdtStreamOut_Reply:
-				var r crdt.PNCounterResponse
-				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
-				tr.expectedInt64(r.GetValue().GetValue(), 49)
-				tr.expectedNil(m.Reply.GetClientAction().GetFailure())
-			default:
-				tr.unexpected(m)
-			}
-		})
 		t.Run("the counter should apply a delta and return its value", func(t *testing.T) {
 			tr := tester{t}
 			p.delta(&entity.PNCounterDelta{Change: -56})
@@ -104,7 +90,7 @@ func TestCRDTPNCounter(t *testing.T) {
 			case *entity.CrdtStreamOut_Reply:
 				var r crdt.PNCounterResponse
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
-				tr.expectedInt64(r.GetValue().GetValue(), -7)
+				tr.expectedInt64(r.GetValue().GetValue(), -70)
 			default:
 				tr.unexpected(m)
 			}

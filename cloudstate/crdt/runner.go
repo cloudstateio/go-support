@@ -29,33 +29,16 @@ type runner struct {
 	context *Context
 }
 
-// handleState handles an incoming state message to be applied to the current state.
-// A entity.CrdtState message is sent to indicate the user function should replace its
-// current value with this value. If the user function does not have a current
-// value, either because the commandContextFor function didn't send one and the
-// user function hasn't updated the value itself in response to a command, or
-// because the value was deleted, this must be sent before any deltas.
-func (r *runner) handleState(state *entity.CrdtState) error {
-	if r.context.crdt == nil {
-		s, err := newFor(state)
-		if err != nil {
-			return err
-		}
-		r.context.crdt = s
-	}
-	// state has to match the state type, applyState will err if not.
-	if err := r.context.crdt.applyState(state); err != nil {
-		return err
-	}
-	return r.context.Instance.Set(r.context, r.context.crdt)
-}
-
 // handleDelta handles an incoming delta message to be applied to the current state.
 // A delta to be applied to the current value. It may be sent at any time as long
 // as the user function already has value.
 func (r *runner) handleDelta(delta *entity.CrdtDelta) error {
 	if r.context.crdt == nil {
-		return fmt.Errorf("received delta for crdt before it was created: %v", r.context.Entity)
+		s, err := newFor(delta)
+		if err != nil {
+			return err
+		}
+		r.context.crdt = s
 	}
 	return r.context.crdt.applyDelta(delta)
 }

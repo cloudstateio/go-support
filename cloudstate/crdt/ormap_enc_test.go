@@ -16,9 +16,8 @@ func BenchmarkORMapEncoding(b *testing.B) {
 		m.Set(encoding.Int64(int64(4)), NewLWWRegister(encoding.String("four")))
 		v := make([]string, 0, m.Size()*b.N)
 		for i := 0; i < b.N; i++ {
-			for _, state := range m.Values() {
-				val := state.GetLwwregister().GetValue()
-				v = append(v, encoding.DecodeString(val))
+			for _, state := range m.Entries() {
+				v = append(v, encoding.DecodeString(state.Value.(*LWWRegister).Value()))
 			}
 		}
 	})
@@ -31,8 +30,9 @@ func BenchmarkORMapEncoding(b *testing.B) {
 		m.Set(encoding.Int64(int64(4)), NewLWWRegister(encoding.String("four")))
 		s0 := ""
 		for i := 0; i < b.N; i++ {
-			for _, state := range m.Values() {
-				s0 = encoding.DecodeString(state.GetLwwregister().GetValue())
+			for _, state := range m.Entries() {
+				// m.LWWRegister(state.Key)
+				s0 = encoding.DecodeString(state.Value.(*LWWRegister).Value())
 			}
 		}
 		_ = s0 == "" // use any0
@@ -48,7 +48,7 @@ func BenchmarkORMapEncoding(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			m.Set(encoding.Int64(int64(5)), NewLWWRegister(encoding.String("five")))
 			m.Delete(encoding.Int64(int64(5)))
-			m.Values()
+			m.Entries()
 		}
 		_ = s0 == "" // use any0
 	})
@@ -63,7 +63,7 @@ func BenchmarkORMapEncoding(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			m.Set(encoding.Int64(int64(1)), NewLWWRegister(encoding.String("one")))
 			m.Delete(encoding.Int64(int64(1)))
-			m.Values()
+			m.Entries()
 		}
 		_ = s0 == "" // use any0
 	})
@@ -80,7 +80,7 @@ func BenchmarkORMapEncoding(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			m.Set(oneInt, NewLWWRegister(one))
 			m.Delete(oneInt)
-			m.Values()
+			m.Entries()
 		}
 		_ = s0 == "" // use any0
 	})

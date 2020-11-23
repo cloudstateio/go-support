@@ -31,31 +31,6 @@ func TestGCounter(t *testing.T) {
 			},
 		}
 	}
-	state := func(val uint64) *entity.CrdtState {
-		return &entity.CrdtState{
-			State: &entity.CrdtState_Gcounter{
-				Gcounter: &entity.GCounterState{
-					Value: val,
-				},
-			},
-		}
-	}
-
-	t.Run("should reflect a state update", func(t *testing.T) {
-		c := GCounter{}
-		if err := c.applyState(encDecState(state(29))); err != nil {
-			t.Fatal(err)
-		}
-		if v := c.Value(); v != 29 {
-			t.Fatalf("c.Value: %v; want: %d", v, 29)
-		}
-		if err := c.applyState(encDecState(state(92))); err != nil {
-			t.Fatal(err)
-		}
-		if v := c.Value(); v != 92 {
-			t.Fatalf("c.Value: %v; want: %d", v, 92)
-		}
-	})
 
 	t.Run("should reflect a delta update", func(t *testing.T) {
 		c := NewGCounter()
@@ -104,7 +79,7 @@ func TestGCounter(t *testing.T) {
 	t.Run("should return its state", func(t *testing.T) {
 		c := GCounter{}
 		c.Increment(10)
-		if v := encDecState(c.State()).GetGcounter().GetValue(); v != 10 {
+		if v := c.Value(); v != 10 {
 			t.Fatalf("c.Value: %v; want: %d", v, 10)
 		}
 		c.resetDelta()
@@ -137,20 +112,6 @@ func TestGCounterAdditional(t *testing.T) {
 		})
 		if err == nil {
 			t.Fatalf("c.applyDelta() has to err, but did not")
-		}
-	})
-
-	t.Run("should catch illegal state applied", func(t *testing.T) {
-		c := NewGCounter()
-		err := c.applyState(&entity.CrdtState{
-			State: &entity.CrdtState_Pncounter{
-				Pncounter: &entity.PNCounterState{
-					Value: 11,
-				},
-			},
-		})
-		if err == nil {
-			t.Fatalf("c.applyState() has to err, but did not")
 		}
 	})
 }
