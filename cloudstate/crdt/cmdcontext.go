@@ -46,6 +46,8 @@ type CommandContext struct {
 	// ended means, we will send a streamed message where we mark the message
 	// as the last one in the stream and therefore, the streamed command has ended.
 	ended bool
+
+	writeConsistency entity.CrdtWriteConsistency
 }
 
 // Command returns the protobuf message the context is handling as a command.
@@ -101,6 +103,10 @@ func (c *CommandContext) Forward(forward *protocol.Forward) {
 // SideEffect adds a side effect to being emitted after the current command successfully has completed.
 func (c *CommandContext) SideEffect(effect *protocol.SideEffect) {
 	c.sideEffects = append(c.sideEffects, effect)
+}
+
+func (c *CommandContext) WriteConsistency(wc entity.CrdtWriteConsistency) {
+	c.writeConsistency = wc
 }
 
 func (c *CommandContext) runCommand(cmd *protocol.Command) (*any.Any, error) {
@@ -163,6 +169,7 @@ func (c *CommandContext) stateAction() *entity.CrdtStateAction {
 					Delta: c.crdt.Delta().GetDelta(),
 				},
 			},
+			WriteConsistency: c.writeConsistency,
 		}
 		c.crdt.resetDelta()
 		return action
@@ -175,14 +182,16 @@ func (c *CommandContext) stateAction() *entity.CrdtStateAction {
 	if c.deleted {
 		c.crdt = nil
 		return &entity.CrdtStateAction{
-			Action: &entity.CrdtStateAction_Delete{Delete: &entity.CrdtDelete{}},
+			Action:           &entity.CrdtStateAction_Delete{Delete: &entity.CrdtDelete{}},
+			WriteConsistency: c.writeConsistency,
 		}
 	}
 	if c.crdt.HasDelta() {
 		delta := c.crdt.Delta()
 		c.crdt.resetDelta()
 		return &entity.CrdtStateAction{
-			Action: &entity.CrdtStateAction_Update{Update: delta},
+			Action:           &entity.CrdtStateAction_Update{Update: delta},
+			WriteConsistency: c.writeConsistency,
 		}
 	}
 	return nil
