@@ -55,9 +55,6 @@ func (c *PNCounter) HasDelta() bool {
 }
 
 func (c *PNCounter) Delta() *entity.CrdtDelta {
-	if c.delta == 0 {
-		return nil
-	}
 	return &entity.CrdtDelta{
 		Delta: &entity.CrdtDelta_Pncounter{
 			Pncounter: &entity.PNCounterDelta{

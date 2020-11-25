@@ -157,28 +157,6 @@ func (c *CommandContext) clientActionFor(reply *any.Any) (*protocol.ClientAction
 }
 
 func (c *CommandContext) stateAction() *entity.CrdtStateAction {
-	if c.created && c.crdt.HasDelta() {
-		c.created = false
-		if c.deleted {
-			c.crdt = nil
-			return nil
-		}
-		action := &entity.CrdtStateAction{
-			Action: &entity.CrdtStateAction_Update{
-				Update: &entity.CrdtDelta{
-					Delta: c.crdt.Delta().GetDelta(),
-				},
-			},
-			WriteConsistency: c.writeConsistency,
-		}
-		c.crdt.resetDelta()
-		return action
-	}
-	if c.created && c.deleted {
-		c.created = false
-		c.crdt = nil
-		return nil
-	}
 	if c.deleted {
 		c.crdt = nil
 		return &entity.CrdtStateAction{

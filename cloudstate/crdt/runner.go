@@ -117,7 +117,8 @@ func (r *runner) handleCommand(cmd *protocol.Command) (streamError error) {
 	if err != nil {
 		return err
 	}
-	if ctx.failed != nil {
+	if clientAction.GetFailure() != nil {
+		ctx.failed = nil
 		return r.sendCrdtReply(&entity.CrdtReply{
 			CommandId:    ctx.CommandID.Value(),
 			ClientAction: clientAction, // this is a ClientAction_Failure

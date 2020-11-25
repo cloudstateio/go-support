@@ -53,9 +53,6 @@ func (c GCounter) HasDelta() bool {
 }
 
 func (c *GCounter) Delta() *entity.CrdtDelta {
-	if c.delta == 0 {
-		return nil
-	}
 	return &entity.CrdtDelta{
 		Delta: &entity.CrdtDelta_Gcounter{
 			Gcounter: &entity.GCounterDelta{

@@ -36,6 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("cloudstate.New failed: %s", err)
 	}
+
 	err = server.RegisterEventSourced(
 		&eventsourced.Entity{
 			ServiceName:   "cloudstate.tck.model.EventSourcedTckModel",

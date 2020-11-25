@@ -53,9 +53,12 @@ func MarshalPrimitive(i interface{}) (*any.Any, error) {
 		_ = buffer.EncodeVarint(uint64(val))
 	case string:
 		typeURL = PrimitiveTypeURLPrefixString
-		_ = buffer.EncodeVarint(fieldKey | proto.WireBytes)
-		if err := buffer.EncodeStringBytes(val); err != nil {
-			return nil, err
+		if val != "" {
+			// see: https://cloudstate.io/docs/contribute/serialization.html#primitive-value-stability
+			_ = buffer.EncodeVarint(fieldKey | proto.WireBytes)
+			if err := buffer.EncodeStringBytes(val); err != nil {
+				return nil, err
+			}
 		}
 	case float32:
 		typeURL = PrimitiveTypeURLPrefixFloat

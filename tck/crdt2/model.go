@@ -17,7 +17,7 @@ package crdt2
 
 import (
 	"errors"
-	"reflect"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -69,21 +69,14 @@ func (e *CrdtTckModelEntity) HandleCommand(ctx *crdt.CommandContext, name string
 					Payload:     req,
 					Synchronous: effect.GetSynchronous(),
 				})
-
-				if r.GetEndState() != nil {
-					state, err := crdtState(c.CRDT())
-					if err != nil {
-						return nil, err
-					}
-					if reflect.DeepEqual(state, c.CRDT()) {
-						ctx.EndStream()
-					}
+			}
+			if r.GetEndState() != nil {
+				state, err := crdtState(c.CRDT())
+				if err != nil {
+					return nil, err
 				}
-				if r.GetCancelUpdate() != nil {
-					c.CancelFunc(func(c *crdt.CommandContext) error {
-						r.GetCancelUpdate()
-						return nil
-					})
+				if proto.Equal(state, r.GetEndState()) {
+					ctx.EndStream()
 				}
 			}
 			state, err := crdtState(c.CRDT())
@@ -93,6 +86,18 @@ func (e *CrdtTckModelEntity) HandleCommand(ctx *crdt.CommandContext, name string
 			return encoding.MarshalAny(&Response{
 				State: state,
 			})
+		})
+		if r.GetCancelUpdate() != nil {
+			ctx.CancelFunc(func(c *crdt.CommandContext) error {
+				return applyUpdate(c.CRDT(), r.GetCancelUpdate())
+			})
+		}
+		state, err := crdtState(ctx.CRDT())
+		if err != nil {
+			return nil, err
+		}
+		return encoding.MarshalAny(&Response{
+			State: state,
 		})
 	}
 
@@ -151,7 +156,6 @@ func (e *CrdtTckModelEntity) HandleCommand(ctx *crdt.CommandContext, name string
 			}
 		}
 	}
-
 	if forwarding {
 		return nil, nil
 	}
@@ -172,7 +176,7 @@ func crdtState(c crdt.CRDT) (*State, error) {
 	case *crdt.PNCounter:
 		state.Value = &State_Pncounter{Pncounter: &PNCounterValue{Value: t.Value()}}
 	case *crdt.GSet:
-		set := make([]string, 0, len(t.Value()))
+		set := make([]string, len(t.Value()))
 		for i, a := range t.Value() {
 			set[i] = encoding.DecodeString(a)
 		}
@@ -181,7 +185,7 @@ func crdtState(c crdt.CRDT) (*State, error) {
 			Elements: set,
 		}}
 	case *crdt.ORSet:
-		set := make([]string, 0, len(t.Value()))
+		set := make([]string, len(t.Value()))
 		for i, a := range t.Value() {
 			set[i] = encoding.DecodeString(a)
 		}
@@ -190,21 +194,30 @@ func crdtState(c crdt.CRDT) (*State, error) {
 			Elements: set,
 		}}
 	case *crdt.LWWRegister:
+		value := ""
+		if t.Value() != nil {
+			value = encoding.DecodeString(t.Value())
+		}
 		state.Value = &State_Lwwregister{Lwwregister: &LWWRegisterValue{
-			Value: encoding.DecodeString(t.Value()),
+			Value: value,
+		}}
+	case *crdt.Flag:
+		state.Value = &State_Flag{Flag: &FlagValue{
+			Value: t.Value(),
 		}}
 	case *crdt.ORMap:
 		values := make([]*ORMapEntryValue, len(t.Entries()))
 		for i, entry := range t.Entries() {
-			s, err := crdtState(entry.Value)
+			state, err := crdtState(entry.Value)
 			if err != nil {
 				return nil, err
 			}
 			values[i] = &ORMapEntryValue{
 				Key:   encoding.DecodeString(entry.Key),
-				Value: s,
+				Value: state,
 			}
 		}
+		sort.Sort(sortedORMapEntryValues(values))
 		state.Value = &State_Ormap{Ormap: &ORMapValue{
 			Entries: values,
 		}}
@@ -214,9 +227,17 @@ func crdtState(c crdt.CRDT) (*State, error) {
 			VotesFor:    int32(t.VotesFor()),
 			TotalVoters: int32(t.Voters()),
 		}}
+	default:
+		return nil, fmt.Errorf("state not created for: %v", c)
 	}
 	return state, nil
 }
+
+type sortedORMapEntryValues []*ORMapEntryValue
+
+func (s sortedORMapEntryValues) Len() int           { return len(s) }
+func (s sortedORMapEntryValues) Less(i, j int) bool { return s[i].Key < s[j].Key }
+func (s sortedORMapEntryValues) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func applyUpdate(c crdt.CRDT, update *Update) error {
 	switch u := update.GetUpdate().(type) {
@@ -227,13 +248,13 @@ func applyUpdate(c crdt.CRDT, update *Update) error {
 	case *Update_Gset:
 		c.(*crdt.GSet).Add(encoding.String(u.Gset.GetAdd()))
 	case *Update_Orset:
-		switch ac := u.Orset.Action.(type) {
+		switch a := u.Orset.Action.(type) {
 		case *ORSetUpdate_Add:
-			c.(*crdt.ORSet).Add(encoding.String(ac.Add))
+			c.(*crdt.ORSet).Add(encoding.String(a.Add))
 		case *ORSetUpdate_Remove:
-			c.(*crdt.ORSet).Remove(encoding.String(ac.Remove))
+			c.(*crdt.ORSet).Remove(encoding.String(a.Remove))
 		case *ORSetUpdate_Clear:
-			if ac.Clear {
+			if a.Clear {
 				c.(*crdt.ORSet).Clear()
 			}
 		}
@@ -248,7 +269,9 @@ func applyUpdate(c crdt.CRDT, update *Update) error {
 			register.Set(encoding.String(u.Lwwregister.GetValue()))
 		case LWWRegisterClockType_REVERSE:
 			register.SetWithClock(
-				encoding.String(u.Lwwregister.GetValue()), crdt.Reverse, 0,
+				encoding.String(u.Lwwregister.GetValue()),
+				crdt.Reverse,
+				0,
 			)
 		case LWWRegisterClockType_CUSTOM:
 			register.SetWithClock(
@@ -256,40 +279,48 @@ func applyUpdate(c crdt.CRDT, update *Update) error {
 				crdt.Custom,
 				u.Lwwregister.GetClock().GetCustomClockValue(),
 			)
+		case LWWRegisterClockType_CUSTOM_AUTO_INCREMENT:
+			register.SetWithClock(
+				encoding.String(u.Lwwregister.GetValue()),
+				crdt.CustomAutoIncrement,
+				u.Lwwregister.GetClock().GetCustomClockValue(),
+			)
 		}
 	case *Update_Flag:
 		c.(*crdt.Flag).Enable()
 	case *Update_Ormap:
+		orMap := c.(*crdt.ORMap)
 		switch a := u.Ormap.Action.(type) {
 		case *ORMapUpdate_Add:
-			if c.(*crdt.ORMap).HasKey(encoding.String(a.Add)) {
+			if orMap.HasKey(encoding.String(a.Add)) {
 				break
 			}
-			newCRDT, err := createCRDT(crdt.EntityID(a.Add))
+			created, err := createCRDT(crdt.EntityID(a.Add))
 			if err != nil {
 				return err
 			}
-			c.(*crdt.ORMap).Set(encoding.String(a.Add), newCRDT)
-			if err = applyUpdate(newCRDT, u.Ormap.GetUpdate().GetUpdate()); err != nil {
+			orMap.Set(encoding.String(a.Add), created)
+			if err = applyUpdate(created, u.Ormap.GetUpdate().GetUpdate()); err != nil {
 				return err
 			}
 		case *ORMapUpdate_Update:
-			id := crdt.EntityID(u.Ormap.GetUpdate().GetKey())
-			var crdtValue crdt.CRDT
-			if !c.(*crdt.ORMap).HasKey(encoding.String(u.Ormap.GetUpdate().GetKey())) {
-				created, err := createCRDT(id)
+			key := encoding.String(u.Ormap.GetUpdate().GetKey())
+			value := orMap.Get(key)
+			var err error
+			if value == nil {
+				value, err = createCRDT(crdt.EntityID(u.Ormap.GetUpdate().GetKey()))
 				if err != nil {
 					return err
 				}
-				crdtValue = created
+				orMap.Set(key, value)
 			}
-			if err := applyUpdate(crdtValue, u.Ormap.GetUpdate().GetUpdate()); err != nil {
+			if err := applyUpdate(value, u.Ormap.GetUpdate().GetUpdate()); err != nil {
 				return err
 			}
 		case *ORMapUpdate_Remove:
-			c.(*crdt.ORMap).Delete(encoding.String(a.Remove))
+			orMap.Delete(encoding.String(a.Remove))
 		case *ORMapUpdate_Clear:
-			c.(*crdt.ORMap).Clear()
+			orMap.Clear()
 		}
 	case *Update_Vote:
 		c.(*crdt.Vote).Vote(u.Vote.GetSelfVote())
@@ -313,8 +344,8 @@ func createCRDT(id crdt.EntityID) (crdt.CRDT, error) {
 		return crdt.NewORSet(), nil
 	case "Flag":
 		return crdt.NewFlag(), nil
-	case "LWWregister":
-		return crdt.NewLWWRegister(nil), nil
+	case "LWWRegister":
+		return crdt.NewLWWRegister(encoding.String("")), nil
 	case "Vote":
 		return crdt.NewVote(), nil
 	case "ORMap":

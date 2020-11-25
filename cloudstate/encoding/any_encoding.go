@@ -45,6 +45,10 @@ func DecodeStruct(a *any.Any, s interface{}) error {
 
 func DecodeString(a *any.Any) string {
 	i, _ := UnmarshalPrimitive(a)
+	if i == nil {
+		// see encoding.String.
+		return ""
+	}
 	return i.(string)
 }
 

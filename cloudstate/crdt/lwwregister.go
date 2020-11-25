@@ -38,6 +38,8 @@ type LWWRegister struct {
 	delta            lwwRegisterDelta
 	clock            Clock
 	customClockValue int64
+
+	hasDelta bool
 }
 
 type lwwRegisterDelta struct {
@@ -53,15 +55,9 @@ func NewLWWRegister(x *any.Any) *LWWRegister {
 // NewLWWRegisterWithClock uses the custom clock value if the clock selected
 // is a custom clock. This is ignored if the clock is not a custom clock.
 func NewLWWRegisterWithClock(x *any.Any, c Clock, customClockValue int64) *LWWRegister {
-	if c != Custom {
-		customClockValue = 0
-	}
-	return &LWWRegister{
-		value:            x,
-		clock:            c,
-		customClockValue: customClockValue,
-		delta:            lwwRegisterDelta{},
-	}
+	var reg LWWRegister
+	reg.SetWithClock(x, c, customClockValue)
+	return &reg
 }
 
 func (r *LWWRegister) Value() *any.Any {
@@ -77,13 +73,14 @@ func (r *LWWRegister) Set(x *any.Any) {
 func (r *LWWRegister) SetWithClock(x *any.Any, c Clock, customClockValue int64) {
 	r.value = x
 	r.clock = c
-	if c == Custom {
+	r.customClockValue = 0
+	if c == Custom || c == CustomAutoIncrement {
 		r.customClockValue = customClockValue
 	}
 	r.delta = lwwRegisterDelta{
 		value:            x,
 		clock:            c,
-		customClockValue: customClockValue,
+		customClockValue: r.customClockValue,
 	}
 }
 
@@ -113,5 +110,8 @@ func (r *LWWRegister) applyDelta(delta *entity.CrdtDelta) error {
 		return fmt.Errorf("unable to apply state %+v to LWWRegister", delta)
 	}
 	r.value = d.GetValue()
+	r.clock = fromCrdtClock(d.GetClock())
+	r.customClockValue = d.GetCustomClockValue()
+	r.resetDelta()
 	return nil
 }

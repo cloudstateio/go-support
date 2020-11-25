@@ -96,14 +96,11 @@ func (v *Vote) HasDelta() bool {
 }
 
 func (v *Vote) Delta() *entity.CrdtDelta {
-	if !v.selfVoteChanged {
-		return nil
-	}
 	return &entity.CrdtDelta{
 		Delta: &entity.CrdtDelta_Vote{Vote: &entity.VoteDelta{
-			SelfVote:    v.selfVote,
-			VotesFor:    int32(v.votesFor), // TODO, we never overflow, yes?
-			TotalVoters: int32(v.voters),
+			SelfVote: v.selfVote,
+			// VotesFor:    int32(v.votesFor),
+			// TotalVoters: int32(v.voters), TODO: ignored by the proxy says the Spec, but the TCK would complain.
 		}},
 	}
 }

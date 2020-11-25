@@ -47,11 +47,11 @@ type orMapDelta struct {
 }
 
 func (m *ORMap) Entries() []*ORMapEntry {
-	e := make([]*ORMapEntry, len(m.value), len(m.value))
+	e := make([]*ORMapEntry, len(m.value))
 	i := 0
 	for _, entry := range m.value {
-		ei := entry
-		e[i] = ei
+		e[i] = entry
+		i++
 	}
 	return e
 }
@@ -76,16 +76,6 @@ func (m *ORMap) HasKey(x *any.Any) (hasKey bool) {
 func (m *ORMap) Size() int {
 	return len(m.value)
 }
-
-// func (m *ORMap) Values() []*entity.CrdtState {
-// 	values := make([]*entity.CrdtState, len(m.value))
-// 	var i = 0
-// 	for _, v := range m.value {
-// 		values[i] = v.value.State()
-// 		i++
-// 	}
-// 	return values
-// }
 
 func (m *ORMap) Keys() []*any.Any {
 	keys := make([]*any.Any, len(m.value))
@@ -165,10 +155,6 @@ func (m *ORMap) HasDelta() bool {
 }
 
 func (m *ORMap) Delta() *entity.CrdtDelta {
-	if !m.HasDelta() {
-		return nil
-	}
-	// added := make([]*entity.ORMapEntry, 0)
 	added := make([]*entity.ORMapEntryDelta, 0)
 	updated := make([]*entity.ORMapEntryDelta, 0)
 	for _, v := range m.value {
@@ -177,10 +163,6 @@ func (m *ORMap) Delta() *entity.CrdtDelta {
 			Delta: v.Value.Delta(),
 		}
 		if _, has := m.delta.added[m.hashAny(v.Key)]; has {
-			// added = append(added, &entity.ORMapEntry{
-			// 	Key:   v.Key,
-			// 	Value: v.value.State(),
-			// })
 			added = append(added, delta)
 		} else if v.Value.HasDelta() {
 			updated = append(updated, delta)
@@ -216,20 +198,19 @@ func (m *ORMap) applyDelta(delta *entity.CrdtDelta) error {
 		delete(m.value, m.hashAny(r))
 	}
 	for _, a := range d.Added {
-		if m.HasKey(a.GetKey()) {
-			continue
+		var err error
+		value := m.Get(a.GetKey())
+		if value == nil {
+			if value, err = newFor(a.GetDelta()); err != nil {
+				return err
+			}
 		}
-		state, err := newFor(a.GetDelta())
-		if err != nil {
-			return err
-		}
-		// if err := state.applyState(a.GetValue()); err != nil {
-		if err := state.applyDelta(a.GetDelta()); err != nil {
+		if err := value.applyDelta(a.GetDelta()); err != nil {
 			return err
 		}
 		m.value[m.hashAny(a.GetKey())] = &ORMapEntry{
 			Key:   a.GetKey(),
-			Value: state,
+			Value: value,
 		}
 	}
 	for _, u := range d.Updated {

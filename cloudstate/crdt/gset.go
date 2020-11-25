@@ -54,16 +54,6 @@ func (s *GSet) Add(a *any.Any) {
 	s.added[h] = a
 }
 
-// func (s GSet) State() *entity.CrdtState {
-// 	return &entity.CrdtState{
-// 		State: &entity.CrdtState_Gset{
-// 			Gset: &entity.GSetState{
-// 				Items: s.Value(),
-// 			},
-// 		},
-// 	}
-// }
-
 func (s GSet) HasDelta() bool {
 	return len(s.added) > 0
 }
@@ -89,9 +79,6 @@ func (s GSet) Added() []*any.Any {
 }
 
 func (s GSet) Delta() *entity.CrdtDelta {
-	if !s.HasDelta() {
-		return nil
-	}
 	return &entity.CrdtDelta{
 		Delta: &entity.CrdtDelta_Gset{
 			Gset: &entity.GSetDelta{
