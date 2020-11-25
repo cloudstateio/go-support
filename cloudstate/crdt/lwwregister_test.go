@@ -40,9 +40,6 @@ func TestLWWRegister(t *testing.T) {
 		if example.Field1 != "foo" {
 			t.Fatalf("example.Field1: %v; want: %v", example.Field1, "foo")
 		}
-		if r.HasDelta() {
-			t.Fatalf("register has delta but should not")
-		}
 		err = encoding.UnmarshalJSON(r.Value(), &example)
 		if err != nil {
 			t.Fatal(err)
@@ -164,7 +161,6 @@ func TestLWWRegister(t *testing.T) {
 			t.Fatalf("register has delta but should not")
 		}
 		e2 := Example{}
-		// err = encoding.UnmarshalJSON(encDecState(r.State()).GetLwwregister().GetValue(), &e2)
 		err = encoding.UnmarshalJSON(r.Value(), &e2)
 		if err != nil {
 			t.Fatal(err)
@@ -176,10 +172,7 @@ func TestLWWRegister(t *testing.T) {
 
 	t.Run("should work with primitive types", func(t *testing.T) {
 		r := NewLWWRegister(encoding.String("momo"))
-		// state := encDecState(r.State())
-		// state := encDecState(r.Value())
 		r.resetDelta()
-		// stateValue := encoding.DecodeString(state.GetLwwregister().GetValue())
 		stateValue := encoding.DecodeString(r.Value())
 		if stateValue != "momo" {
 			t.Fatalf("stateValue: %v; want: %v", stateValue, "momo")

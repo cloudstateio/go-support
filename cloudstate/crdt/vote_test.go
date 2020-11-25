@@ -96,9 +96,6 @@ func TestVote(t *testing.T) {
 		if dv := delta.GetVote().GetSelfVote(); dv != true {
 			t.Fatalf("delta.SelfVote(): %v; want: %v", dv, true)
 		}
-		if delta2 := v.Delta(); delta2 != nil {
-			t.Fatalf("v.Delta(): %v; want: %v", delta2, nil)
-		}
 		if v.VotesFor() != 1 {
 			t.Fatalf("v.VotesFor(): %v; want: %v", v.VotesFor(), 1)
 		}
@@ -111,9 +108,6 @@ func TestVote(t *testing.T) {
 		v.resetDelta()
 		if dv := delta.GetVote().GetSelfVote(); dv != false {
 			t.Fatalf("delta.SelfVote(): %v; want: %v", dv, false)
-		}
-		if d := v.Delta(); d != nil {
-			t.Fatalf("v.Delta(): %v; want: %v", d, nil)
 		}
 		if v.VotesFor() != 0 {
 			t.Fatalf("v.VotesFor(): %v; want: %v", v.VotesFor(), 0)
@@ -145,10 +139,6 @@ func TestVote(t *testing.T) {
 		}
 		if tv := v.Voters(); tv != 1 {
 			t.Fatalf("state.GetTotalVoters(): %v; want: %v", tv, 1)
-		}
-
-		if d := v.Delta(); d != nil {
-			t.Fatalf("v.Delta(): %v; want: %v", d, nil)
 		}
 	})
 

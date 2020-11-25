@@ -71,8 +71,8 @@ func TestGCounter(t *testing.T) {
 			t.Fatalf("counter increment: %v; want: %v", c.delta, 7)
 		}
 		c.resetDelta()
-		if d := c.Delta(); d != nil {
-			t.Fatalf("c.Delta() should be nil, but was not")
+		if d := c.Delta(); d == nil {
+			t.Fatalf("c.Delta() should be not nil, but was")
 		}
 	})
 
@@ -83,8 +83,8 @@ func TestGCounter(t *testing.T) {
 			t.Fatalf("c.Value: %v; want: %d", v, 10)
 		}
 		c.resetDelta()
-		if d := c.Delta(); d != nil {
-			t.Fatalf("c.Delta() should be nil, but was not")
+		if d := c.Delta(); d == nil {
+			t.Fatalf("c.Delta() should be not nil, but was")
 		}
 	})
 }

@@ -119,6 +119,10 @@ func UnmarshalPrimitive(any *any.Any) (interface{}, error) {
 		return int64(value), nil
 	}
 	if any.GetTypeUrl() == PrimitiveTypeURLPrefixString {
+		if len(any.GetValue()) == 0 {
+			// see: https://cloudstate.io/docs/contribute/serialization.html#primitive-value-stability
+			return "", nil
+		}
 		_, err := buffer.DecodeVarint()
 		if err != nil {
 			return nil, ErrNotUnmarshalled

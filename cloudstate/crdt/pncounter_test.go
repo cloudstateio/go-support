@@ -63,9 +63,6 @@ func TestPNCounter(t *testing.T) {
 			t.Fatalf("c.Delta: %v; want: %v", d, 10)
 		}
 		c.resetDelta()
-		if d := c.Delta(); d != nil {
-			t.Fatalf("c.Delta() should have been nil but was not: %+v", d)
-		}
 		c.Decrement(3)
 		if v := c.Value(); v != 7 {
 			t.Fatalf("c.Value: %v; want: %v", v, 7)
@@ -78,9 +75,6 @@ func TestPNCounter(t *testing.T) {
 			t.Fatalf("c.Delta: %v; want: %v", d, -7)
 		}
 		c.resetDelta()
-		if d := c.Delta(); d != nil {
-			t.Fatalf("c.Delta() should have been nil but was not: %+v", d)
-		}
 	})
 	t.Run("should return its state", func(t *testing.T) {
 		c := NewPNCounter()
@@ -92,9 +86,6 @@ func TestPNCounter(t *testing.T) {
 			t.Fatalf("c.Value: %v; want: %v", v, 10)
 		}
 		c.resetDelta()
-		if d := c.Delta(); d != nil {
-			t.Fatalf("c.Delta() should have been nil but was not: %+v", d)
-		}
 	})
 }
 
