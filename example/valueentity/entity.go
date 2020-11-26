@@ -3,6 +3,7 @@ package valueentity
 import (
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/cloudstateio/go-support/cloudstate/encoding"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
@@ -26,30 +27,33 @@ func NewShoppingCart(value.EntityID) value.EntityHandler {
 	}
 }
 
+type sortedCart []*domain.LineItem
+
+func (s sortedCart) Len() int           { return len(s) }
+func (s sortedCart) Less(i, j int) bool { return s[i].ProductId < s[j].ProductId }
+func (s sortedCart) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
 // AddItem implements the AddItem command handling of the shopping cart service.
 func (sc *ShoppingCart) AddItem(ctx *value.Context, item *AddLineItem) (*any.Any, error) {
 	if item.GetQuantity() <= 0 {
 		return nil, protocol.ClientError{Err: fmt.Errorf("cannot add negative quantity of to item %q", item.GetProductId())}
 	}
-	found := int32(0)
+
 	if i, _ := sc.find(item.ProductId); i != nil {
-		// see: https://github.com/cloudstateio/cloudstate/issues/490
-		found += i.Quantity
-		sc.remove(item.ProductId)
-		// i.Quantity += item.Quantity
-		// c := &domain.Cart{Items: sc.cart}
-		// if err := ctx.Update(encoding.MarshalAny(c)); err != nil {
-		// 	return nil, err
-		// }
-		// return encoding.MarshalAny(&empty.Empty{})
+		i.Quantity += item.Quantity
+		sort.Sort(sortedCart(sc.cart))
+		c := &domain.Cart{Items: sc.cart}
+		if err := ctx.Update(encoding.MarshalAny(c)); err != nil {
+			return nil, err
+		}
+		return encoding.MarshalAny(&empty.Empty{})
 	}
 	sc.cart = append(sc.cart, &domain.LineItem{
 		ProductId: item.ProductId,
 		Name:      item.Name,
-		// see: https://github.com/cloudstateio/cloudstate/issues/490
-		Quantity: item.Quantity + found,
-		// Quantity: item.Quantity,
+		Quantity:  item.Quantity,
 	})
+	sort.Sort(sortedCart(sc.cart))
 	c := &domain.Cart{Items: sc.cart}
 	if err := ctx.Update(encoding.MarshalAny(c)); err != nil {
 		return nil, err
@@ -65,6 +69,7 @@ func (sc *ShoppingCart) RemoveItem(ctx *value.Context, item *RemoveLineItem) (*a
 	if !sc.remove(item.ProductId) {
 		return nil, protocol.ClientError{errors.New("unable to remove product")}
 	}
+	sort.Sort(sortedCart(sc.cart))
 	c := &domain.Cart{Items: sc.cart}
 	if err := ctx.Update(encoding.MarshalAny(c)); err != nil {
 		return nil, err
