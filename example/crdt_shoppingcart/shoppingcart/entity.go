@@ -19,9 +19,10 @@ func NewShoppingCart(id crdt.EntityID) crdt.EntityHandler {
 
 func (s *ShoppingCart) getCart() (*Cart, error) {
 	items := &Cart{}
-	for _, state := range s.items.Values() {
+	// for _, state := range s.items.Values() {
+	for _, state := range s.items.Entries() {
 		var item LineItem
-		if err := encoding.DecodeStruct(state.GetLwwregister().GetValue(), &item); err != nil {
+		if err := encoding.DecodeStruct(state.Value.(*crdt.LWWRegister).Value(), &item); err != nil {
 			return nil, err
 		}
 		items.Items = append(items.Items, &item)

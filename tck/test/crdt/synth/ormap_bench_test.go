@@ -37,7 +37,7 @@ func BenchmarkCRDTORMap(b *testing.B) {
 			case *entity.CrdtStreamOut_Reply:
 				var r crdt.ORMapResponse
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
-				var state entity.CrdtState_Gcounter
+				var state entity.CrdtDelta_Gcounter
 				err := encoding.DecodeStruct(r.GetEntries().Values[0].GetValue(), &state)
 				if err != nil {
 					tr.t.Fatal(err)

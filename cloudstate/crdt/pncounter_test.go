@@ -22,15 +22,6 @@ import (
 )
 
 func TestPNCounter(t *testing.T) {
-	state := func(v int64) *entity.CrdtState {
-		return &entity.CrdtState{
-			State: &entity.CrdtState_Pncounter{
-				Pncounter: &entity.PNCounterState{
-					Value: v,
-				},
-			},
-		}
-	}
 	delta := func(v int64) *entity.CrdtDelta {
 		return &entity.CrdtDelta{
 			Delta: &entity.CrdtDelta_Pncounter{
@@ -45,21 +36,6 @@ func TestPNCounter(t *testing.T) {
 		c := NewPNCounter()
 		if v := c.Value(); v != 0 {
 			t.Fatalf("c.Value: %v; want: %v", v, 0)
-		}
-	})
-	t.Run("should reflect a state update", func(t *testing.T) {
-		c := NewPNCounter()
-		if err := c.applyState(encDecState(state(10))); err != nil {
-			t.Fatal(err)
-		}
-		if v := c.Value(); v != 10 {
-			t.Fatalf("c.Value: %v; want: %v", v, 10)
-		}
-		if err := c.applyState(encDecState(state(-5))); err != nil {
-			t.Fatal(err)
-		}
-		if v := c.Value(); v != -5 {
-			t.Fatalf("c.Value: %v; want: %v", v, -5)
 		}
 	})
 	t.Run("should reflect a delta update", func(t *testing.T) {
@@ -87,9 +63,6 @@ func TestPNCounter(t *testing.T) {
 			t.Fatalf("c.Delta: %v; want: %v", d, 10)
 		}
 		c.resetDelta()
-		if d := c.Delta(); d != nil {
-			t.Fatalf("c.Delta() should have been nil but was not: %+v", d)
-		}
 		c.Decrement(3)
 		if v := c.Value(); v != 7 {
 			t.Fatalf("c.Value: %v; want: %v", v, 7)
@@ -102,9 +75,6 @@ func TestPNCounter(t *testing.T) {
 			t.Fatalf("c.Delta: %v; want: %v", d, -7)
 		}
 		c.resetDelta()
-		if d := c.Delta(); d != nil {
-			t.Fatalf("c.Delta() should have been nil but was not: %+v", d)
-		}
 	})
 	t.Run("should return its state", func(t *testing.T) {
 		c := NewPNCounter()
@@ -112,13 +82,10 @@ func TestPNCounter(t *testing.T) {
 		if v := c.Value(); v != 10 {
 			t.Fatalf("c.Value: %v; want: %v", v, 10)
 		}
-		if v := encDecState(c.State()).GetPncounter().GetValue(); v != 10 {
+		if v := c.Value(); v != 10 {
 			t.Fatalf("c.Value: %v; want: %v", v, 10)
 		}
 		c.resetDelta()
-		if d := c.Delta(); d != nil {
-			t.Fatalf("c.Delta() should have been nil but was not: %+v", d)
-		}
 	})
 }
 
@@ -145,20 +112,6 @@ func TestPNCounterAdditional(t *testing.T) {
 		})
 		if err == nil {
 			t.Fatalf("c.applyDelta() has to err, but did not")
-		}
-	})
-
-	t.Run("should catch illegal state applied", func(t *testing.T) {
-		c := NewPNCounter()
-		err := c.applyState(&entity.CrdtState{
-			State: &entity.CrdtState_Flag{
-				Flag: &entity.FlagState{
-					Value: true,
-				},
-			},
-		})
-		if err == nil {
-			t.Fatalf("c.applyState() has to err, but did not")
 		}
 	})
 }

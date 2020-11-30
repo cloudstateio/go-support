@@ -18,7 +18,6 @@ package encoding
 import (
 	"testing"
 
-	"github.com/cloudstateio/go-support/cloudstate/entity"
 	"github.com/golang/protobuf/ptypes/any"
 )
 
@@ -64,25 +63,25 @@ func TestMarshalling(t *testing.T) {
 			t.Fail()
 		}
 	})
-	t.Run("marshal/unmarshal proto message", func(t *testing.T) {
-		s := entity.CrdtState_Flag{Flag: &entity.FlagState{
-			Value: true,
-		}}
-		x, err := MarshalJSON(s)
-		if err != nil {
-			t.Error(err)
-		}
-		s1 := entity.CrdtState_Flag{Flag: &entity.FlagState{
-			Value: true,
-		}}
-		err = UnmarshalJSON(x, &s1)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if s.Flag.Value != s1.Flag.Value {
-			t.Fatal()
-		}
-	})
+	// t.Run("marshal/unmarshal proto message", func(t *testing.T) {
+	// 	s := entity.CrdtState_Flag{Flag: &entity.FlagState{
+	// 		Value: true,
+	// 	}}
+	// 	x, err := MarshalJSON(s)
+	// 	if err != nil {
+	// 		t.Error(err)
+	// 	}
+	// 	s1 := entity.CrdtState_Flag{Flag: &entity.FlagState{
+	// 		Value: true,
+	// 	}}
+	// 	err = UnmarshalJSON(x, &s1)
+	// 	if err != nil {
+	// 		t.Fatal(err)
+	// 	}
+	// 	if s.Flag.Value != s1.Flag.Value {
+	// 		t.Fatal()
+	// 	}
+	// })
 }
 
 var testsJSON = []struct {

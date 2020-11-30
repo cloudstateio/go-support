@@ -48,24 +48,11 @@ func (c *GCounter) Increment(i uint64) {
 	c.delta += i
 }
 
-func (c *GCounter) State() *entity.CrdtState {
-	return &entity.CrdtState{
-		State: &entity.CrdtState_Gcounter{
-			Gcounter: &entity.GCounterState{
-				Value: c.value,
-			},
-		},
-	}
-}
-
 func (c GCounter) HasDelta() bool {
 	return c.delta > 0
 }
 
 func (c *GCounter) Delta() *entity.CrdtDelta {
-	if c.delta == 0 {
-		return nil
-	}
 	return &entity.CrdtDelta{
 		Delta: &entity.CrdtDelta_Gcounter{
 			Gcounter: &entity.GCounterDelta{
@@ -77,15 +64,6 @@ func (c *GCounter) Delta() *entity.CrdtDelta {
 
 func (c *GCounter) resetDelta() {
 	c.delta = 0
-}
-
-func (c *GCounter) applyState(state *entity.CrdtState) error {
-	s := state.GetGcounter()
-	if s == nil {
-		return fmt.Errorf("unable to apply state %v to GCounter", state)
-	}
-	c.value = state.GetGcounter().GetValue()
-	return nil
 }
 
 func (c *GCounter) applyDelta(delta *entity.CrdtDelta) error {

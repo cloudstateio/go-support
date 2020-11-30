@@ -58,7 +58,7 @@ func TestCRDTGSet(t *testing.T) {
 				}),
 			).Message.(type) {
 			case *entity.CrdtStreamOut_Reply:
-				tr.expectedNil(m.Reply.GetStateAction().GetUpdate())
+				tr.expectedNotNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNil(m.Reply.GetStateAction().GetDelete())
 				// action reply
 				var r crdt.GSetResponse
@@ -69,8 +69,8 @@ func TestCRDTGSet(t *testing.T) {
 				tr.expectedString(p.Left, "one")
 				tr.expectedInt64(p.Right, 1)
 				// create state action
-				tr.expectedInt(len(m.Reply.GetStateAction().GetCreate().GetGset().GetItems()), 1)
-				i := m.Reply.GetStateAction().GetCreate().GetGset().GetItems()[0]
+				tr.expectedInt(len(m.Reply.GetStateAction().GetUpdate().GetGset().GetAdded()), 1)
+				i := m.Reply.GetStateAction().GetUpdate().GetGset().GetAdded()[0]
 				tr.expectedBool(strings.HasPrefix(i.TypeUrl, encoding.JSONTypeURLPrefix), true)
 				var state pair
 				tr.toStruct(i, &state)
@@ -93,7 +93,7 @@ func TestCRDTGSet(t *testing.T) {
 				}),
 			).Message.(type) {
 			case *entity.CrdtStreamOut_Reply:
-				tr.expectedNil(m.Reply.GetStateAction().GetCreate())
+				tr.expectedNotNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNil(m.Reply.GetStateAction().GetDelete())
 				// action reply
 				var r crdt.GSetResponse

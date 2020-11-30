@@ -50,24 +50,11 @@ func (c *PNCounter) Decrement(d int64) {
 	c.delta -= d
 }
 
-func (c *PNCounter) State() *entity.CrdtState {
-	return &entity.CrdtState{
-		State: &entity.CrdtState_Pncounter{
-			Pncounter: &entity.PNCounterState{
-				Value: c.value,
-			},
-		},
-	}
-}
-
 func (c *PNCounter) HasDelta() bool {
 	return c.delta != 0
 }
 
 func (c *PNCounter) Delta() *entity.CrdtDelta {
-	if c.delta == 0 {
-		return nil
-	}
 	return &entity.CrdtDelta{
 		Delta: &entity.CrdtDelta_Pncounter{
 			Pncounter: &entity.PNCounterDelta{
@@ -79,15 +66,6 @@ func (c *PNCounter) Delta() *entity.CrdtDelta {
 
 func (c *PNCounter) resetDelta() {
 	c.delta = 0
-}
-
-func (c *PNCounter) applyState(state *entity.CrdtState) error {
-	s := state.GetPncounter()
-	if s == nil {
-		return fmt.Errorf("unable to apply state %v to PNCounter", state)
-	}
-	c.value = s.GetValue()
-	return nil
 }
 
 func (c *PNCounter) applyDelta(delta *entity.CrdtDelta) error {

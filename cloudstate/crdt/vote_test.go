@@ -34,34 +34,34 @@ func TestVote(t *testing.T) {
 			t.Fatalf("v.SelfVote(): %v; want: %v", v.SelfVote(), false)
 		}
 	})
-	t.Run("should reflect a state update", func(t *testing.T) {
-		v := NewVote()
-		err := v.applyState(encDecState(&entity.CrdtState{
-			State: &entity.CrdtState_Vote{
-				Vote: &entity.VoteState{
-					TotalVoters: 5,
-					VotesFor:    3,
-					SelfVote:    true,
-				}},
-		}))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if v.VotesFor() != 3 {
-			t.Fatalf("v.VotesFor(): %v; want: %v", v.VotesFor(), 3)
-		}
-		if v.Voters() != 5 {
-			t.Fatalf("v.Voters(): %v; want: %v", v.Voters(), 5)
-		}
-		if v.SelfVote() != true {
-			t.Fatalf("v.SelfVote(): %v; want: %v", v.SelfVote(), true)
-		}
-	})
+	// t.Run("should reflect a state update", func(t *testing.T) {
+	// 	v := NewVote()
+	// 	err := v.applyState(encDecState(&entity.CrdtState{
+	// 		State: &entity.CrdtState_Vote{
+	// 			Vote: &entity.VoteState{
+	// 				TotalVoters: 5,
+	// 				VotesFor:    3,
+	// 				SelfVote:    true,
+	// 			}},
+	// 	}))
+	// 	if err != nil {
+	// 		t.Fatal(err)
+	// 	}
+	// 	if v.VotesFor() != 3 {
+	// 		t.Fatalf("v.VotesFor(): %v; want: %v", v.VotesFor(), 3)
+	// 	}
+	// 	if v.Voters() != 5 {
+	// 		t.Fatalf("v.Voters(): %v; want: %v", v.Voters(), 5)
+	// 	}
+	// 	if v.SelfVote() != true {
+	// 		t.Fatalf("v.SelfVote(): %v; want: %v", v.SelfVote(), true)
+	// 	}
+	// })
 	t.Run("should reflect a delta update", func(t *testing.T) {
 		v := NewVote()
-		if err := v.applyState(encDecState(&entity.CrdtState{
-			State: &entity.CrdtState_Vote{
-				Vote: &entity.VoteState{
+		if err := v.applyDelta(encDecDelta(&entity.CrdtDelta{
+			Delta: &entity.CrdtDelta_Vote{
+				Vote: &entity.VoteDelta{
 					TotalVoters: 5,
 					VotesFor:    3,
 					SelfVote:    false,
@@ -96,9 +96,6 @@ func TestVote(t *testing.T) {
 		if dv := delta.GetVote().GetSelfVote(); dv != true {
 			t.Fatalf("delta.SelfVote(): %v; want: %v", dv, true)
 		}
-		if delta2 := v.Delta(); delta2 != nil {
-			t.Fatalf("v.Delta(): %v; want: %v", delta2, nil)
-		}
 		if v.VotesFor() != 1 {
 			t.Fatalf("v.VotesFor(): %v; want: %v", v.VotesFor(), 1)
 		}
@@ -112,9 +109,6 @@ func TestVote(t *testing.T) {
 		if dv := delta.GetVote().GetSelfVote(); dv != false {
 			t.Fatalf("delta.SelfVote(): %v; want: %v", dv, false)
 		}
-		if d := v.Delta(); d != nil {
-			t.Fatalf("v.Delta(): %v; want: %v", d, nil)
-		}
 		if v.VotesFor() != 0 {
 			t.Fatalf("v.VotesFor(): %v; want: %v", v.VotesFor(), 0)
 		}
@@ -124,56 +118,50 @@ func TestVote(t *testing.T) {
 	})
 	t.Run("should return its state", func(t *testing.T) {
 		v := NewVote()
-		state1 := encDecState(v.State())
 		v.resetDelta()
-		if sv := state1.GetVote().GetSelfVote(); sv != false {
+		if sv := v.SelfVote(); sv != false {
 			t.Fatalf("state.GetSelfVote(): %v; want: %v", sv, false)
 		}
-		if vf := state1.GetVote().GetVotesFor(); vf != 0 {
+		if vf := v.VotesFor(); vf != 0 {
 			t.Fatalf("state.GetVotesFor(): %v; want: %v", vf, 0)
 		}
-		if tv := state1.GetVote().GetTotalVoters(); tv != 1 {
+		if tv := v.Voters(); tv != 1 {
 			t.Fatalf("state.GetTotalVoters(): %v; want: %v", tv, 1)
 		}
 
 		v.Vote(true)
-		state2 := encDecState(v.State())
 		v.resetDelta()
-		if sv := state2.GetVote().GetSelfVote(); sv != true {
+		if sv := v.SelfVote(); sv != true {
 			t.Fatalf("state.GetSelfVote(): %v; want: %v", sv, true)
 		}
-		if vf := state2.GetVote().GetVotesFor(); vf != 1 {
+		if vf := v.VotesFor(); vf != 1 {
 			t.Fatalf("state.GetVotesFor(): %v; want: %v", vf, 1)
 		}
-		if tv := state2.GetVote().GetTotalVoters(); tv != 1 {
+		if tv := v.Voters(); tv != 1 {
 			t.Fatalf("state.GetTotalVoters(): %v; want: %v", tv, 1)
-		}
-
-		if d := v.Delta(); d != nil {
-			t.Fatalf("v.Delta(): %v; want: %v", d, nil)
 		}
 	})
 
-	voteState := func(vs *entity.VoteState) *entity.CrdtState {
-		return encDecState(&entity.CrdtState{
-			State: &entity.CrdtState_Vote{Vote: vs},
+	voteDelta := func(vs *entity.VoteDelta) *entity.CrdtDelta {
+		return encDecDelta(&entity.CrdtDelta{
+			Delta: &entity.CrdtDelta_Vote{Vote: vs},
 		})
 	}
 	t.Run("should correctly calculate a majority vote", func(t *testing.T) {
 		var tests = []struct {
-			vs  *entity.VoteState
+			vs  *entity.VoteDelta
 			maj bool
 		}{
-			{&entity.VoteState{TotalVoters: 5, VotesFor: 3, SelfVote: true}, true},
-			{&entity.VoteState{TotalVoters: 5, VotesFor: 2, SelfVote: true}, false},
-			{&entity.VoteState{TotalVoters: 6, VotesFor: 3, SelfVote: true}, false},
-			{&entity.VoteState{TotalVoters: 6, VotesFor: 4, SelfVote: true}, true},
-			{&entity.VoteState{TotalVoters: 1, VotesFor: 0, SelfVote: false}, false},
-			{&entity.VoteState{TotalVoters: 1, VotesFor: 1, SelfVote: true}, true},
+			{&entity.VoteDelta{TotalVoters: 5, VotesFor: 3, SelfVote: true}, true},
+			{&entity.VoteDelta{TotalVoters: 5, VotesFor: 2, SelfVote: true}, false},
+			{&entity.VoteDelta{TotalVoters: 6, VotesFor: 3, SelfVote: true}, false},
+			{&entity.VoteDelta{TotalVoters: 6, VotesFor: 4, SelfVote: true}, true},
+			{&entity.VoteDelta{TotalVoters: 1, VotesFor: 0, SelfVote: false}, false},
+			{&entity.VoteDelta{TotalVoters: 1, VotesFor: 1, SelfVote: true}, true},
 		}
 		v := NewVote()
 		for _, test := range tests {
-			if err := v.applyState(voteState(test.vs)); err != nil {
+			if err := v.applyDelta(voteDelta(test.vs)); err != nil {
 				t.Fatal(err)
 			}
 			if v.Majority() != test.maj {
@@ -183,18 +171,18 @@ func TestVote(t *testing.T) {
 	})
 	t.Run("should correctly calculate an at least one vote", func(t *testing.T) {
 		var tests = []struct {
-			vs      *entity.VoteState
+			vs      *entity.VoteDelta
 			atLeast bool
 		}{
-			{&entity.VoteState{TotalVoters: 1, VotesFor: 0, SelfVote: false}, false},
-			{&entity.VoteState{TotalVoters: 5, VotesFor: 0, SelfVote: false}, false},
-			{&entity.VoteState{TotalVoters: 1, VotesFor: 1, SelfVote: true}, true},
-			{&entity.VoteState{TotalVoters: 5, VotesFor: 1, SelfVote: true}, true},
-			{&entity.VoteState{TotalVoters: 5, VotesFor: 3, SelfVote: true}, true},
+			{&entity.VoteDelta{TotalVoters: 1, VotesFor: 0, SelfVote: false}, false},
+			{&entity.VoteDelta{TotalVoters: 5, VotesFor: 0, SelfVote: false}, false},
+			{&entity.VoteDelta{TotalVoters: 1, VotesFor: 1, SelfVote: true}, true},
+			{&entity.VoteDelta{TotalVoters: 5, VotesFor: 1, SelfVote: true}, true},
+			{&entity.VoteDelta{TotalVoters: 5, VotesFor: 3, SelfVote: true}, true},
 		}
 		v := NewVote()
 		for _, test := range tests {
-			if err := v.applyState(voteState(test.vs)); err != nil {
+			if err := v.applyDelta(voteDelta(test.vs)); err != nil {
 				t.Fatal(err)
 			}
 			if v.AtLeastOne() != test.atLeast {
@@ -204,18 +192,18 @@ func TestVote(t *testing.T) {
 	})
 	t.Run("should correctly calculate an all votes", func(t *testing.T) {
 		var tests = []struct {
-			vs  *entity.VoteState
+			vs  *entity.VoteDelta
 			all bool
 		}{
-			{&entity.VoteState{TotalVoters: 1, VotesFor: 0, SelfVote: false}, false},
-			{&entity.VoteState{TotalVoters: 5, VotesFor: 0, SelfVote: false}, false},
-			{&entity.VoteState{TotalVoters: 1, VotesFor: 1, SelfVote: true}, true},
-			{&entity.VoteState{TotalVoters: 5, VotesFor: 3, SelfVote: true}, false},
-			{&entity.VoteState{TotalVoters: 5, VotesFor: 5, SelfVote: true}, true},
+			{&entity.VoteDelta{TotalVoters: 1, VotesFor: 0, SelfVote: false}, false},
+			{&entity.VoteDelta{TotalVoters: 5, VotesFor: 0, SelfVote: false}, false},
+			{&entity.VoteDelta{TotalVoters: 1, VotesFor: 1, SelfVote: true}, true},
+			{&entity.VoteDelta{TotalVoters: 5, VotesFor: 3, SelfVote: true}, false},
+			{&entity.VoteDelta{TotalVoters: 5, VotesFor: 5, SelfVote: true}, true},
 		}
 		v := NewVote()
 		for _, test := range tests {
-			if err := v.applyState(voteState(test.vs)); err != nil {
+			if err := v.applyDelta(voteDelta(test.vs)); err != nil {
 				t.Fatal(err)
 			}
 			if v.All() != test.all {

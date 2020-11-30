@@ -24,22 +24,22 @@ import (
 
 func Test_newFor(t *testing.T) {
 	type args struct {
-		state *entity.CrdtState
+		state *entity.CrdtDelta
 	}
 	tests := []struct {
 		name string
 		args args
 		want CRDT
 	}{
-		{"newForFlag", args{state: &entity.CrdtState{State: &entity.CrdtState_Flag{}}}, NewFlag()},
-		{"newForGCounter", args{state: &entity.CrdtState{State: &entity.CrdtState_Gcounter{}}}, NewGCounter()},
-		{"newForGset", args{state: &entity.CrdtState{State: &entity.CrdtState_Gset{}}}, NewGSet()},
-		{"newForLWWRegister", args{state: &entity.CrdtState{State: &entity.CrdtState_Lwwregister{}}}, NewLWWRegister(nil)},
-		{"newForORMap", args{state: &entity.CrdtState{State: &entity.CrdtState_Ormap{}}}, NewORMap()},
-		{"newForORSet", args{state: &entity.CrdtState{State: &entity.CrdtState_Orset{}}}, NewORSet()},
-		{"newForPNCounter", args{state: &entity.CrdtState{State: &entity.CrdtState_Pncounter{}}}, NewPNCounter()},
-		{"newForVote", args{state: &entity.CrdtState{State: &entity.CrdtState_Vote{}}}, NewVote()},
-		{"newForNil", args{state: &entity.CrdtState{State: nil}}, nil},
+		{"newForFlag", args{state: &entity.CrdtDelta{Delta: &entity.CrdtDelta_Flag{}}}, NewFlag()},
+		{"newForGCounter", args{state: &entity.CrdtDelta{Delta: &entity.CrdtDelta_Gcounter{}}}, NewGCounter()},
+		{"newForGset", args{state: &entity.CrdtDelta{Delta: &entity.CrdtDelta_Gset{}}}, NewGSet()},
+		{"newForLWWRegister", args{state: &entity.CrdtDelta{Delta: &entity.CrdtDelta_Lwwregister{}}}, NewLWWRegister(nil)},
+		{"newForORMap", args{state: &entity.CrdtDelta{Delta: &entity.CrdtDelta_Ormap{}}}, NewORMap()},
+		{"newForORSet", args{state: &entity.CrdtDelta{Delta: &entity.CrdtDelta_Orset{}}}, NewORSet()},
+		{"newForPNCounter", args{state: &entity.CrdtDelta{Delta: &entity.CrdtDelta_Pncounter{}}}, NewPNCounter()},
+		{"newForVote", args{state: &entity.CrdtDelta{Delta: &entity.CrdtDelta_Vote{}}}, NewVote()},
+		{"newForNil", args{state: &entity.CrdtDelta{Delta: nil}}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

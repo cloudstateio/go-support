@@ -46,6 +46,8 @@ type CommandContext struct {
 	// ended means, we will send a streamed message where we mark the message
 	// as the last one in the stream and therefore, the streamed command has ended.
 	ended bool
+
+	writeConsistency entity.CrdtWriteConsistency
 }
 
 // Command returns the protobuf message the context is handling as a command.
@@ -103,6 +105,10 @@ func (c *CommandContext) SideEffect(effect *protocol.SideEffect) {
 	c.sideEffects = append(c.sideEffects, effect)
 }
 
+func (c *CommandContext) WriteConsistency(wc entity.CrdtWriteConsistency) {
+	c.writeConsistency = wc
+}
+
 func (c *CommandContext) runCommand(cmd *protocol.Command) (*any.Any, error) {
 	// unmarshal the commands message
 	msgName := strings.TrimPrefix(cmd.GetPayload().GetTypeUrl(), "type.googleapis.com/")
@@ -151,33 +157,19 @@ func (c *CommandContext) clientActionFor(reply *any.Any) (*protocol.ClientAction
 }
 
 func (c *CommandContext) stateAction() *entity.CrdtStateAction {
-	if c.created && c.crdt.HasDelta() {
-		c.created = false
-		if c.deleted {
-			c.crdt = nil
-			return nil
-		}
-		c.crdt.resetDelta()
-		return &entity.CrdtStateAction{
-			Action: &entity.CrdtStateAction_Create{Create: c.crdt.State()},
-		}
-	}
-	if c.created && c.deleted {
-		c.created = false
-		c.crdt = nil
-		return nil
-	}
 	if c.deleted {
 		c.crdt = nil
 		return &entity.CrdtStateAction{
-			Action: &entity.CrdtStateAction_Delete{Delete: &entity.CrdtDelete{}},
+			Action:           &entity.CrdtStateAction_Delete{Delete: &entity.CrdtDelete{}},
+			WriteConsistency: c.writeConsistency,
 		}
 	}
 	if c.crdt.HasDelta() {
 		delta := c.crdt.Delta()
 		c.crdt.resetDelta()
 		return &entity.CrdtStateAction{
-			Action: &entity.CrdtStateAction_Update{Update: delta},
+			Action:           &entity.CrdtStateAction_Update{Update: delta},
+			WriteConsistency: c.writeConsistency,
 		}
 	}
 	return nil

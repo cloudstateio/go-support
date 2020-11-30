@@ -62,7 +62,8 @@ func TestCRDTORMap(t *testing.T) {
 				}),
 			).Message.(type) {
 			case *entity.CrdtStreamOut_Reply:
-				tr.expectedNotNil(m.Reply.GetStateAction().GetCreate())
+				// tr.expectedNotNil(m.Reply.GetStateAction().GetCreate())
+				tr.expectedNotNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNotNil(m.Reply.GetClientAction())
 			default:
 				tr.unexpected(m)
@@ -105,34 +106,5 @@ func TestCRDTORMap(t *testing.T) {
 				tr.unexpected(m)
 			}
 		})
-	})
-	t.Run("ORMap – State", func(t *testing.T) {
-		tr := tester{t}
-		entityID := "ormap-2"
-		command := "ProcessORMap"
-		p := newProxy(ctx, s)
-		defer p.teardown()
-		p.init(&entity.CrdtInit{ServiceName: serviceName, EntityId: entityID})
-		p.state(&entity.ORMapState{
-			Entries: []*entity.ORMapEntry{
-				{
-					Key:   encoding.String("one"),
-					Value: &entity.CrdtState{State: &entity.CrdtState_Flag{Flag: &entity.FlagState{Value: false}}},
-				},
-			},
-		})
-		switch m := p.command(entityID, command,
-			ormapRequest(&crdt.ORMapActionRequest{
-				EntryKey: encoding.String("one"),
-				Request: &crdt.ORMapActionRequest_FlagRequest{
-					FlagRequest: flagRequest(&crdt.FlagEnable{}),
-				},
-			}),
-		).Message.(type) {
-		case *entity.CrdtStreamOut_Reply:
-			tr.expectedNotNil(m.Reply.GetStateAction().GetCreate())
-		default:
-			tr.unexpected(m)
-		}
 	})
 }
