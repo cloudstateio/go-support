@@ -210,16 +210,21 @@ func (x *Request) GetActions() []*RequestAction {
 // If `end_state` is set, it specifies a target state for ending the stream.
 // If `cancel_update` is set, it specifies an update to apply when the stream is cancelled.
 // If `effects` is set, it specifies side effects to return with every streamed response.
+// If `initial_update` is set, it specifies an update to apply on the initial request.
+// If `empty` is set, then no responses should be streamed (for testing empty stream connections).
+// Otherwise, the current state should be streamed on changes.
 //
 type StreamedRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id           string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EndState     *State    `protobuf:"bytes,2,opt,name=end_state,json=endState,proto3" json:"end_state,omitempty"`
-	CancelUpdate *Update   `protobuf:"bytes,3,opt,name=cancel_update,json=cancelUpdate,proto3" json:"cancel_update,omitempty"`
-	Effects      []*Effect `protobuf:"bytes,4,rep,name=effects,proto3" json:"effects,omitempty"`
+	Id            string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	EndState      *State    `protobuf:"bytes,2,opt,name=end_state,json=endState,proto3" json:"end_state,omitempty"`
+	CancelUpdate  *Update   `protobuf:"bytes,3,opt,name=cancel_update,json=cancelUpdate,proto3" json:"cancel_update,omitempty"`
+	Effects       []*Effect `protobuf:"bytes,4,rep,name=effects,proto3" json:"effects,omitempty"`
+	InitialUpdate *Update   `protobuf:"bytes,5,opt,name=initial_update,json=initialUpdate,proto3" json:"initial_update,omitempty"`
+	Empty         bool      `protobuf:"varint,6,opt,name=empty,proto3" json:"empty,omitempty"`
 }
 
 func (x *StreamedRequest) Reset() {
@@ -280,6 +285,20 @@ func (x *StreamedRequest) GetEffects() []*Effect {
 		return x.Effects
 	}
 	return nil
+}
+
+func (x *StreamedRequest) GetInitialUpdate() *Update {
+	if x != nil {
+		return x.InitialUpdate
+	}
+	return nil
+}
+
+func (x *StreamedRequest) GetEmpty() bool {
+	if x != nil {
+		return x.Empty
+	}
+	return false
 }
 
 //
@@ -2122,8 +2141,8 @@ var file_tck_crdt2_proto_rawDesc = []byte{
 	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x63, 0x6c,
 	0x6f, 0x75, 0x64, 0x73, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x74, 0x63, 0x6b, 0x2e, 0x6d, 0x6f, 0x64,
 	0x65, 0x6c, 0x2e, 0x63, 0x72, 0x64, 0x74, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x41,
-	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x07, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0xeb,
-	0x01, 0x0a, 0x0f, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x65, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x07, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0xcb,
+	0x02, 0x0a, 0x0f, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x65, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x12, 0x14, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x04,
 	0x90, 0xb5, 0x18, 0x01, 0x52, 0x02, 0x69, 0x64, 0x12, 0x3d, 0x0a, 0x09, 0x65, 0x6e, 0x64, 0x5f,
 	0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x63, 0x6c,
@@ -2137,7 +2156,13 @@ var file_tck_crdt2_proto_rawDesc = []byte{
 	0x3b, 0x0a, 0x07, 0x65, 0x66, 0x66, 0x65, 0x63, 0x74, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b,
 	0x32, 0x21, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x73, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x74, 0x63,
 	0x6b, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x63, 0x72, 0x64, 0x74, 0x2e, 0x45, 0x66, 0x66,
-	0x65, 0x63, 0x74, 0x52, 0x07, 0x65, 0x66, 0x66, 0x65, 0x63, 0x74, 0x73, 0x22, 0xc7, 0x02, 0x0a,
+	0x65, 0x63, 0x74, 0x52, 0x07, 0x65, 0x66, 0x66, 0x65, 0x63, 0x74, 0x73, 0x12, 0x48, 0x0a, 0x0e,
+	0x69, 0x6e, 0x69, 0x74, 0x69, 0x61, 0x6c, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x18, 0x05,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x73, 0x74, 0x61, 0x74,
+	0x65, 0x2e, 0x74, 0x63, 0x6b, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x63, 0x72, 0x64, 0x74,
+	0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x0d, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x61, 0x6c,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x70, 0x74, 0x79, 0x18,
+	0x06, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x65, 0x6d, 0x70, 0x74, 0x79, 0x22, 0xc7, 0x02, 0x0a,
 	0x0d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x3b,
 	0x0a, 0x06, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21,
 	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x73, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x74, 0x63, 0x6b, 0x2e,
@@ -2416,46 +2441,47 @@ var file_tck_crdt2_proto_depIdxs = []int32{
 	21, // 1: cloudstate.tck.model.crdt.StreamedRequest.end_state:type_name -> cloudstate.tck.model.crdt.State
 	5,  // 2: cloudstate.tck.model.crdt.StreamedRequest.cancel_update:type_name -> cloudstate.tck.model.crdt.Update
 	19, // 3: cloudstate.tck.model.crdt.StreamedRequest.effects:type_name -> cloudstate.tck.model.crdt.Effect
-	5,  // 4: cloudstate.tck.model.crdt.RequestAction.update:type_name -> cloudstate.tck.model.crdt.Update
-	16, // 5: cloudstate.tck.model.crdt.RequestAction.delete:type_name -> cloudstate.tck.model.crdt.Delete
-	17, // 6: cloudstate.tck.model.crdt.RequestAction.forward:type_name -> cloudstate.tck.model.crdt.Forward
-	18, // 7: cloudstate.tck.model.crdt.RequestAction.fail:type_name -> cloudstate.tck.model.crdt.Fail
-	19, // 8: cloudstate.tck.model.crdt.RequestAction.effect:type_name -> cloudstate.tck.model.crdt.Effect
-	6,  // 9: cloudstate.tck.model.crdt.Update.gcounter:type_name -> cloudstate.tck.model.crdt.GCounterUpdate
-	7,  // 10: cloudstate.tck.model.crdt.Update.pncounter:type_name -> cloudstate.tck.model.crdt.PNCounterUpdate
-	8,  // 11: cloudstate.tck.model.crdt.Update.gset:type_name -> cloudstate.tck.model.crdt.GSetUpdate
-	9,  // 12: cloudstate.tck.model.crdt.Update.orset:type_name -> cloudstate.tck.model.crdt.ORSetUpdate
-	10, // 13: cloudstate.tck.model.crdt.Update.lwwregister:type_name -> cloudstate.tck.model.crdt.LWWRegisterUpdate
-	12, // 14: cloudstate.tck.model.crdt.Update.flag:type_name -> cloudstate.tck.model.crdt.FlagUpdate
-	13, // 15: cloudstate.tck.model.crdt.Update.ormap:type_name -> cloudstate.tck.model.crdt.ORMapUpdate
-	15, // 16: cloudstate.tck.model.crdt.Update.vote:type_name -> cloudstate.tck.model.crdt.VoteUpdate
-	1,  // 17: cloudstate.tck.model.crdt.Update.write_consistency:type_name -> cloudstate.tck.model.crdt.UpdateWriteConsistency
-	11, // 18: cloudstate.tck.model.crdt.LWWRegisterUpdate.clock:type_name -> cloudstate.tck.model.crdt.LWWRegisterClock
-	0,  // 19: cloudstate.tck.model.crdt.LWWRegisterClock.clockType:type_name -> cloudstate.tck.model.crdt.LWWRegisterClockType
-	14, // 20: cloudstate.tck.model.crdt.ORMapUpdate.update:type_name -> cloudstate.tck.model.crdt.ORMapEntryUpdate
-	5,  // 21: cloudstate.tck.model.crdt.ORMapEntryUpdate.update:type_name -> cloudstate.tck.model.crdt.Update
-	21, // 22: cloudstate.tck.model.crdt.Response.state:type_name -> cloudstate.tck.model.crdt.State
-	22, // 23: cloudstate.tck.model.crdt.State.gcounter:type_name -> cloudstate.tck.model.crdt.GCounterValue
-	23, // 24: cloudstate.tck.model.crdt.State.pncounter:type_name -> cloudstate.tck.model.crdt.PNCounterValue
-	24, // 25: cloudstate.tck.model.crdt.State.gset:type_name -> cloudstate.tck.model.crdt.GSetValue
-	25, // 26: cloudstate.tck.model.crdt.State.orset:type_name -> cloudstate.tck.model.crdt.ORSetValue
-	26, // 27: cloudstate.tck.model.crdt.State.lwwregister:type_name -> cloudstate.tck.model.crdt.LWWRegisterValue
-	27, // 28: cloudstate.tck.model.crdt.State.flag:type_name -> cloudstate.tck.model.crdt.FlagValue
-	28, // 29: cloudstate.tck.model.crdt.State.ormap:type_name -> cloudstate.tck.model.crdt.ORMapValue
-	30, // 30: cloudstate.tck.model.crdt.State.vote:type_name -> cloudstate.tck.model.crdt.VoteValue
-	29, // 31: cloudstate.tck.model.crdt.ORMapValue.entries:type_name -> cloudstate.tck.model.crdt.ORMapEntryValue
-	21, // 32: cloudstate.tck.model.crdt.ORMapEntryValue.value:type_name -> cloudstate.tck.model.crdt.State
-	2,  // 33: cloudstate.tck.model.crdt.CrdtTckModel.Process:input_type -> cloudstate.tck.model.crdt.Request
-	3,  // 34: cloudstate.tck.model.crdt.CrdtTckModel.ProcessStreamed:input_type -> cloudstate.tck.model.crdt.StreamedRequest
-	2,  // 35: cloudstate.tck.model.crdt.CrdtTwo.Call:input_type -> cloudstate.tck.model.crdt.Request
-	20, // 36: cloudstate.tck.model.crdt.CrdtTckModel.Process:output_type -> cloudstate.tck.model.crdt.Response
-	20, // 37: cloudstate.tck.model.crdt.CrdtTckModel.ProcessStreamed:output_type -> cloudstate.tck.model.crdt.Response
-	20, // 38: cloudstate.tck.model.crdt.CrdtTwo.Call:output_type -> cloudstate.tck.model.crdt.Response
-	36, // [36:39] is the sub-list for method output_type
-	33, // [33:36] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	5,  // 4: cloudstate.tck.model.crdt.StreamedRequest.initial_update:type_name -> cloudstate.tck.model.crdt.Update
+	5,  // 5: cloudstate.tck.model.crdt.RequestAction.update:type_name -> cloudstate.tck.model.crdt.Update
+	16, // 6: cloudstate.tck.model.crdt.RequestAction.delete:type_name -> cloudstate.tck.model.crdt.Delete
+	17, // 7: cloudstate.tck.model.crdt.RequestAction.forward:type_name -> cloudstate.tck.model.crdt.Forward
+	18, // 8: cloudstate.tck.model.crdt.RequestAction.fail:type_name -> cloudstate.tck.model.crdt.Fail
+	19, // 9: cloudstate.tck.model.crdt.RequestAction.effect:type_name -> cloudstate.tck.model.crdt.Effect
+	6,  // 10: cloudstate.tck.model.crdt.Update.gcounter:type_name -> cloudstate.tck.model.crdt.GCounterUpdate
+	7,  // 11: cloudstate.tck.model.crdt.Update.pncounter:type_name -> cloudstate.tck.model.crdt.PNCounterUpdate
+	8,  // 12: cloudstate.tck.model.crdt.Update.gset:type_name -> cloudstate.tck.model.crdt.GSetUpdate
+	9,  // 13: cloudstate.tck.model.crdt.Update.orset:type_name -> cloudstate.tck.model.crdt.ORSetUpdate
+	10, // 14: cloudstate.tck.model.crdt.Update.lwwregister:type_name -> cloudstate.tck.model.crdt.LWWRegisterUpdate
+	12, // 15: cloudstate.tck.model.crdt.Update.flag:type_name -> cloudstate.tck.model.crdt.FlagUpdate
+	13, // 16: cloudstate.tck.model.crdt.Update.ormap:type_name -> cloudstate.tck.model.crdt.ORMapUpdate
+	15, // 17: cloudstate.tck.model.crdt.Update.vote:type_name -> cloudstate.tck.model.crdt.VoteUpdate
+	1,  // 18: cloudstate.tck.model.crdt.Update.write_consistency:type_name -> cloudstate.tck.model.crdt.UpdateWriteConsistency
+	11, // 19: cloudstate.tck.model.crdt.LWWRegisterUpdate.clock:type_name -> cloudstate.tck.model.crdt.LWWRegisterClock
+	0,  // 20: cloudstate.tck.model.crdt.LWWRegisterClock.clockType:type_name -> cloudstate.tck.model.crdt.LWWRegisterClockType
+	14, // 21: cloudstate.tck.model.crdt.ORMapUpdate.update:type_name -> cloudstate.tck.model.crdt.ORMapEntryUpdate
+	5,  // 22: cloudstate.tck.model.crdt.ORMapEntryUpdate.update:type_name -> cloudstate.tck.model.crdt.Update
+	21, // 23: cloudstate.tck.model.crdt.Response.state:type_name -> cloudstate.tck.model.crdt.State
+	22, // 24: cloudstate.tck.model.crdt.State.gcounter:type_name -> cloudstate.tck.model.crdt.GCounterValue
+	23, // 25: cloudstate.tck.model.crdt.State.pncounter:type_name -> cloudstate.tck.model.crdt.PNCounterValue
+	24, // 26: cloudstate.tck.model.crdt.State.gset:type_name -> cloudstate.tck.model.crdt.GSetValue
+	25, // 27: cloudstate.tck.model.crdt.State.orset:type_name -> cloudstate.tck.model.crdt.ORSetValue
+	26, // 28: cloudstate.tck.model.crdt.State.lwwregister:type_name -> cloudstate.tck.model.crdt.LWWRegisterValue
+	27, // 29: cloudstate.tck.model.crdt.State.flag:type_name -> cloudstate.tck.model.crdt.FlagValue
+	28, // 30: cloudstate.tck.model.crdt.State.ormap:type_name -> cloudstate.tck.model.crdt.ORMapValue
+	30, // 31: cloudstate.tck.model.crdt.State.vote:type_name -> cloudstate.tck.model.crdt.VoteValue
+	29, // 32: cloudstate.tck.model.crdt.ORMapValue.entries:type_name -> cloudstate.tck.model.crdt.ORMapEntryValue
+	21, // 33: cloudstate.tck.model.crdt.ORMapEntryValue.value:type_name -> cloudstate.tck.model.crdt.State
+	2,  // 34: cloudstate.tck.model.crdt.CrdtTckModel.Process:input_type -> cloudstate.tck.model.crdt.Request
+	3,  // 35: cloudstate.tck.model.crdt.CrdtTckModel.ProcessStreamed:input_type -> cloudstate.tck.model.crdt.StreamedRequest
+	2,  // 36: cloudstate.tck.model.crdt.CrdtTwo.Call:input_type -> cloudstate.tck.model.crdt.Request
+	20, // 37: cloudstate.tck.model.crdt.CrdtTckModel.Process:output_type -> cloudstate.tck.model.crdt.Response
+	20, // 38: cloudstate.tck.model.crdt.CrdtTckModel.ProcessStreamed:output_type -> cloudstate.tck.model.crdt.Response
+	20, // 39: cloudstate.tck.model.crdt.CrdtTwo.Call:output_type -> cloudstate.tck.model.crdt.Response
+	37, // [37:40] is the sub-list for method output_type
+	34, // [34:37] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_tck_crdt2_proto_init() }

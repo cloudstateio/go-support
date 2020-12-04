@@ -48,12 +48,13 @@ func NewCrdtTwoEntity(id crdt.EntityID) crdt.EntityHandler {
 	return &CrdtTwoEntity{}
 }
 
-func (e *CrdtTckModelEntity) HandleCommand(ctx *crdt.CommandContext, name string, msg proto.Message) (*any.Any, error) {
+func (e *CrdtTckModelEntity) processStreamed(ctx *crdt.CommandContext, name string, msg proto.Message) (*any.Any, error) {
+	r, ok := msg.(*StreamedRequest)
+	if !ok {
+		return nil, nil
+	}
+	fmt.Printf("processStreamed: %+v\n", ctx.EntityID)
 	if ctx.Streamed() {
-		r, ok := msg.(*StreamedRequest)
-		if !ok {
-			return nil, nil
-		}
 		ctx.ChangeFunc(func(c *crdt.CommandContext) (*any.Any, error) {
 			for _, effect := range r.GetEffects() {
 				req, err := encoding.MarshalAny(&Request{
@@ -79,6 +80,9 @@ func (e *CrdtTckModelEntity) HandleCommand(ctx *crdt.CommandContext, name string
 					ctx.EndStream()
 				}
 			}
+			if r.GetEmpty() {
+				return nil, nil
+			}
 			state, err := crdtState(c.CRDT())
 			if err != nil {
 				return nil, err
@@ -87,20 +91,33 @@ func (e *CrdtTckModelEntity) HandleCommand(ctx *crdt.CommandContext, name string
 				State: state,
 			})
 		})
-		if r.GetCancelUpdate() != nil {
+		if u := r.GetCancelUpdate(); u != nil {
 			ctx.CancelFunc(func(c *crdt.CommandContext) error {
-				return applyUpdate(c.CRDT(), r.GetCancelUpdate())
+				return applyUpdate(c.CRDT(), u)
 			})
 		}
-		state, err := crdtState(ctx.CRDT())
-		if err != nil {
+	}
+	if u := r.GetInitialUpdate(); u != nil {
+		if err := applyUpdate(ctx.CRDT(), u); err != nil {
 			return nil, err
 		}
-		return encoding.MarshalAny(&Response{
-			State: state,
-		})
 	}
+	if r.GetEmpty() {
+		return nil, nil
+	}
+	state, err := crdtState(ctx.CRDT())
+	if err != nil {
+		return nil, err
+	}
+	return encoding.MarshalAny(&Response{
+		State: state,
+	})
+}
 
+func (e *CrdtTckModelEntity) HandleCommand(ctx *crdt.CommandContext, name string, msg proto.Message) (*any.Any, error) {
+	if name == "ProcessStreamed" {
+		return e.processStreamed(ctx, name, msg)
+	}
 	r, ok := msg.(*Request)
 	if !ok {
 		return nil, nil

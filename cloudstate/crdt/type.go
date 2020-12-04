@@ -21,7 +21,6 @@ type CRDT interface {
 	Delta() *entity.CrdtDelta
 	HasDelta() bool
 
-	// applyState(*entity.CrdtState) error
 	applyDelta(*entity.CrdtDelta) error
 	resetDelta()
 }

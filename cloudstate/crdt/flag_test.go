@@ -60,9 +60,6 @@ func TestFlag(t *testing.T) {
 	})
 	t.Run("should return its state", func(t *testing.T) {
 		f := NewFlag()
-		// if encDecState(f.State()).GetFlag().GetValue() {
-		// 	t.Fatal("value should be false but was not")
-		// }
 		f.resetDelta()
 		f.Enable()
 		if !f.Value() {

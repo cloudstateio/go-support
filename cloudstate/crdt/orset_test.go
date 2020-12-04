@@ -141,7 +141,6 @@ func TestORSet(t *testing.T) {
 		if s.Size() != 1 {
 			t.Fatalf("s.Size(): %v; want: %v", s.Size(), 1)
 		}
-		// delta := encDecDelta(s.Delta())
 		s.resetDelta()
 		if s.HasDelta() {
 			t.Fatalf("set has delta")

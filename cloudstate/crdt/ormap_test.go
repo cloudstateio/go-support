@@ -124,9 +124,6 @@ func TestORMap(t *testing.T) {
 		if !contains(delta.GetOrmap().GetRemoved(), "one", "two") {
 			t.Fatalf("delta.removed should contain keys 'one','two' but did not: %v", delta.GetOrmap().GetRemoved())
 		}
-		// if d := m.Delta(); d != nil {
-		// 	t.Fatalf("m.Delta(): %v; want: %v", d, nil)
-		// }
 	})
 	t.Run("should generate an update delta", func(t *testing.T) {
 		m := NewORMap()
@@ -149,9 +146,6 @@ func TestORMap(t *testing.T) {
 		if i := entry.GetDelta().GetGcounter().GetIncrement(); i != 5 {
 			t.Fatalf("increment: %v; want: %v", i, 5)
 		}
-		// if d := m.Delta(); d != nil {
-		// 	t.Fatalf("m.Delta(): %v; want: %v", d, nil)
-		// }
 	})
 	t.Run("should generate a clear delta", func(t *testing.T) {
 		m := NewORMap()
