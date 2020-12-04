@@ -134,7 +134,6 @@ func TestLWWRegister(t *testing.T) {
 			t.Fatal(err)
 		}
 		r := NewLWWRegister(foo)
-		// r.Set(encoding.Struct(Example{Field1: "foo"})) // TODO: this is not the same, check
 		bar, err := encoding.Struct(Example{Field1: "bar"})
 		if err != nil {
 			t.Fatal(err)

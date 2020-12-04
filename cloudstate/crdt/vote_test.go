@@ -34,29 +34,6 @@ func TestVote(t *testing.T) {
 			t.Fatalf("v.SelfVote(): %v; want: %v", v.SelfVote(), false)
 		}
 	})
-	// t.Run("should reflect a state update", func(t *testing.T) {
-	// 	v := NewVote()
-	// 	err := v.applyState(encDecState(&entity.CrdtState{
-	// 		State: &entity.CrdtState_Vote{
-	// 			Vote: &entity.VoteState{
-	// 				TotalVoters: 5,
-	// 				VotesFor:    3,
-	// 				SelfVote:    true,
-	// 			}},
-	// 	}))
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
-	// 	if v.VotesFor() != 3 {
-	// 		t.Fatalf("v.VotesFor(): %v; want: %v", v.VotesFor(), 3)
-	// 	}
-	// 	if v.Voters() != 5 {
-	// 		t.Fatalf("v.Voters(): %v; want: %v", v.Voters(), 5)
-	// 	}
-	// 	if v.SelfVote() != true {
-	// 		t.Fatalf("v.SelfVote(): %v; want: %v", v.SelfVote(), true)
-	// 	}
-	// })
 	t.Run("should reflect a delta update", func(t *testing.T) {
 		v := NewVote()
 		if err := v.applyDelta(encDecDelta(&entity.CrdtDelta{
