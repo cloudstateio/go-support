@@ -21,23 +21,23 @@ import (
 	"github.com/cloudstateio/go-support/cloudstate/entity"
 )
 
-func newFor(state *entity.CrdtState) (CRDT, error) {
-	switch t := state.GetState().(type) {
-	case *entity.CrdtState_Flag:
+func newFor(delta *entity.CrdtDelta) (CRDT, error) {
+	switch t := delta.GetDelta().(type) {
+	case *entity.CrdtDelta_Flag:
 		return NewFlag(), nil
-	case *entity.CrdtState_Gcounter:
+	case *entity.CrdtDelta_Gcounter:
 		return NewGCounter(), nil
-	case *entity.CrdtState_Gset:
+	case *entity.CrdtDelta_Gset:
 		return NewGSet(), nil
-	case *entity.CrdtState_Lwwregister:
+	case *entity.CrdtDelta_Lwwregister:
 		return NewLWWRegister(nil), nil
-	case *entity.CrdtState_Ormap:
+	case *entity.CrdtDelta_Ormap:
 		return NewORMap(), nil
-	case *entity.CrdtState_Orset:
+	case *entity.CrdtDelta_Orset:
 		return NewORSet(), nil
-	case *entity.CrdtState_Pncounter:
+	case *entity.CrdtDelta_Pncounter:
 		return NewPNCounter(), nil
-	case *entity.CrdtState_Vote:
+	case *entity.CrdtDelta_Vote:
 		return NewVote(), nil
 	default:
 		return nil, fmt.Errorf("no CRDT type matched: %v", t)

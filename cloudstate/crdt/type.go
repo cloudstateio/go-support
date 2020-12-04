@@ -18,11 +18,9 @@ package crdt
 import "github.com/cloudstateio/go-support/cloudstate/entity"
 
 type CRDT interface {
-	State() *entity.CrdtState
 	Delta() *entity.CrdtDelta
 	HasDelta() bool
 
-	applyState(*entity.CrdtState) error
 	applyDelta(*entity.CrdtDelta) error
 	resetDelta()
 }

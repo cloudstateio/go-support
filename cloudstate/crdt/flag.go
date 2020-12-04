@@ -72,22 +72,3 @@ func (f *Flag) applyDelta(delta *entity.CrdtDelta) error {
 	f.value = f.value || d.Value
 	return nil
 }
-
-func (f Flag) State() *entity.CrdtState {
-	return &entity.CrdtState{
-		State: &entity.CrdtState_Flag{
-			Flag: &entity.FlagState{
-				Value: f.value,
-			},
-		},
-	}
-}
-
-func (f *Flag) applyState(state *entity.CrdtState) error {
-	s := state.GetFlag()
-	if s == nil {
-		return fmt.Errorf("unable to apply state %+v to Flag", state)
-	}
-	f.value = s.GetValue()
-	return nil
-}

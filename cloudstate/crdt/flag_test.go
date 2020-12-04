@@ -31,29 +31,11 @@ func TestFlag(t *testing.T) {
 			},
 		}
 	}
-	state := func(value bool) *entity.CrdtState {
-		return &entity.CrdtState{
-			State: &entity.CrdtState_Flag{
-				Flag: &entity.FlagState{
-					Value: value,
-				},
-			},
-		}
-	}
 
 	t.Run("should be disabled when instantiated", func(t *testing.T) {
 		f := NewFlag()
 		if f.Value() {
 			t.Fatal("flag should be false but was not")
-		}
-	})
-	t.Run("should reflect a state update", func(t *testing.T) {
-		f := NewFlag()
-		if err := f.applyState(encDecState(state(true))); err != nil {
-			t.Fatal(err)
-		}
-		if !f.Value() {
-			t.Fatal("flag should be true but was not")
 		}
 	})
 	t.Run("should reflect a delta update", func(t *testing.T) {
@@ -78,12 +60,9 @@ func TestFlag(t *testing.T) {
 	})
 	t.Run("should return its state", func(t *testing.T) {
 		f := NewFlag()
-		if encDecState(f.State()).GetFlag().GetValue() {
-			t.Fatal("value should be false but was not")
-		}
 		f.resetDelta()
 		f.Enable()
-		if !encDecState(f.State()).GetFlag().GetValue() {
+		if !f.Value() {
 			t.Fatal("delta should be true but was not")
 		}
 		f.resetDelta()
@@ -110,18 +89,6 @@ func TestFlagAdditional(t *testing.T) {
 			Delta: &entity.CrdtDelta_Gcounter{
 				Gcounter: &entity.GCounterDelta{
 					Increment: 11,
-				},
-			},
-		}); err == nil {
-			t.Fatal("flag applyDelta should err but did not")
-		}
-	})
-	t.Run("apply invalid state", func(t *testing.T) {
-		f := NewFlag()
-		if err := f.applyState(&entity.CrdtState{
-			State: &entity.CrdtState_Gcounter{
-				Gcounter: &entity.GCounterState{
-					Value: 11,
 				},
 			},
 		}); err == nil {

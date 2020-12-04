@@ -68,10 +68,9 @@ func TestCRDTFlag(t *testing.T) {
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &f)
 				tr.expectedTrue(f.GetValue().GetValue())
 				// state action
-				tr.expectedNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNil(m.Reply.GetStateAction().GetDelete())
-				tr.expectedNotNil(m.Reply.GetStateAction().GetCreate())
-				tr.expectedTrue(m.Reply.GetStateAction().GetCreate().GetFlag().GetValue())
+				tr.expectedNotNil(m.Reply.GetStateAction().GetUpdate())
+				tr.expectedTrue(m.Reply.GetStateAction().GetUpdate().GetFlag().GetValue())
 			default:
 				tr.unexpected(m)
 			}
@@ -88,7 +87,6 @@ func TestCRDTFlag(t *testing.T) {
 				var f crdt.FlagResponse
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &f)
 				// state action
-				tr.expectedNil(m.Reply.GetStateAction().GetCreate())
 				tr.expectedNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNotNil(m.Reply.GetStateAction().GetDelete())
 			default:
@@ -102,7 +100,7 @@ func TestCRDTFlag(t *testing.T) {
 
 			entityID = "flag-2"
 			p.init(&entity.CrdtInit{ServiceName: serviceName, EntityId: entityID})
-			p.state(&entity.FlagState{Value: true})
+			p.delta(&entity.FlagDelta{Value: true})
 			switch m := p.command(entityID, command,
 				flagRequest(&crdt.Get{}),
 			).Message.(type) {
@@ -110,12 +108,10 @@ func TestCRDTFlag(t *testing.T) {
 				// action reply
 				tr.expectedNil(m.Reply.GetSideEffects())
 				tr.expectedNil(m.Reply.GetClientAction().GetFailure())
-				tr.expectedNil(m.Reply.GetStateAction().GetCreate())
 				var f crdt.FlagResponse
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &f)
 				tr.expectedTrue(f.GetValue().GetValue())
 				// state action
-				tr.expectedNil(m.Reply.GetStateAction().GetCreate())
 				tr.expectedNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNil(m.Reply.GetStateAction().GetDelete())
 			default:
@@ -141,7 +137,6 @@ func TestCRDTFlag(t *testing.T) {
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &f)
 				tr.expectedTrue(f.GetValue().GetValue())
 				// state action
-				tr.expectedNil(m.Reply.GetStateAction().GetCreate())
 				tr.expectedNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNil(m.Reply.GetStateAction().GetDelete())
 			default:

@@ -131,21 +131,14 @@ func (s *Server) handle(stream entity.Crdt_HandleServer) error {
 			return err
 		}
 		switch m := msg.GetMessage().(type) {
-		case *entity.CrdtStreamIn_State:
-			if err := r.handleState(m.State); err != nil {
+		case *entity.CrdtStreamIn_Delta:
+			if err := r.handleDelta(m.Delta); err != nil {
 				return err
 			}
 			if err := r.handleChange(); err != nil {
 				return err
 			}
-		case *entity.CrdtStreamIn_Changed:
-			if err := r.handleDelta(m.Changed); err != nil {
-				return err
-			}
-			if err := r.handleChange(); err != nil {
-				return err
-			}
-		case *entity.CrdtStreamIn_Deleted:
+		case *entity.CrdtStreamIn_Delete:
 			// Delete the entity. May be sent at any time. The user function should clear its value when it receives this.
 			// A proxy may decide to terminate the stream after sending this.
 			r.context.Delete()
@@ -196,9 +189,9 @@ func (s *Server) handleInit(init *entity.CrdtInit, r *runner) error {
 		ctx:         r.stream.Context(), // This context is stable as long as the runner runs.
 		streamedCtx: make(map[CommandID]*CommandContext),
 	}
-	// The init message may have an initial state.
-	if state := init.GetState(); state != nil {
-		if err := r.handleState(state); err != nil {
+	// The init message may have an initial delta.
+	if delta := init.GetDelta(); delta != nil {
+		if err := r.handleDelta(delta); err != nil {
 			return err
 		}
 	}
