@@ -42,13 +42,13 @@ func (c *Context) entityReply(command *protocol.Command, reply *any.Any) *entity
 	if c.failure != nil {
 		return &entity.ValueEntityReply{
 			CommandId: command.Id,
-			// SideEffects: c.sideEffects,
+			// SideEffects: c.sideEffects, // TODO: as per TCK we don't return sideEffect, why?
 			ClientAction: &protocol.ClientAction{
 				Action: &protocol.ClientAction_Failure{
 					Failure: &protocol.Failure{
 						CommandId:   command.Id,
 						Description: c.failure.Error(),
-						// Restart:     len(c.sideEffects) > 0,
+						// Restart:     len(c.sideEffects) > 0, TODO: how do we support restarts?
 						Restart: false,
 					},
 				},
@@ -148,8 +148,8 @@ func (c *Context) runCommand(cmd *protocol.Command) (*any.Any, error) {
 }
 
 func (c *Context) Delete() {
-	c.delete = true
 	c.update = false
+	c.delete = true
 	c.state = nil
 }
 

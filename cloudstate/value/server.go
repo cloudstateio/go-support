@@ -56,7 +56,7 @@ func (s *Server) Handle(stream entity.ValueEntity_HandleServer) error {
 	switch m := init.GetMessage().(type) {
 	case *entity.ValueEntityStreamIn_Init:
 	default:
-		return fmt.Errorf("a message was received without having a Init message first: %v", m)
+		return fmt.Errorf("a message was received without having an Init message first: %v", m)
 	}
 
 	e, err := s.entityFor(ServiceName(init.GetInit().GetServiceName()))
@@ -71,12 +71,12 @@ func (s *Server) Handle(stream entity.ValueEntity_HandleServer) error {
 		ctx:      stream.Context(),
 	}
 
-	if init.GetInit().GetState().GetValue() != nil {
-		err = c.Instance.HandleState(c, init.GetInit().GetState().GetValue())
+	if state := init.GetInit().GetState().GetValue(); state != nil {
+		err = c.Instance.HandleState(c, state)
 		if err != nil {
 			return err
 		}
-		c.state = init.GetInit().GetState().GetValue()
+		c.state = state
 	}
 	for {
 		msg, err := stream.Recv()
@@ -93,20 +93,17 @@ func (s *Server) Handle(stream entity.ValueEntity_HandleServer) error {
 				return err
 			}
 			c.failure = err
-			entityReply := c.entityReply(m.Command, reply)
 			err = stream.Send(&entity.ValueEntityStreamOut{
 				Message: &entity.ValueEntityStreamOut_Reply{
-					Reply: entityReply,
+					Reply: c.entityReply(m.Command, reply),
 				},
 			})
 			if err != nil {
 				return err
 			}
-
-			c.delete = false
 			c.update = false
+			c.delete = false
 			c.failure = nil
-
 		case *entity.ValueEntityStreamIn_Init:
 			if EntityID(m.Init.EntityId) == c.EntityID {
 				return errors.New("duplicate init message for the same entity")
