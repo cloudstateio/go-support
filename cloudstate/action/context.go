@@ -17,13 +17,9 @@ package action
 
 import (
 	"context"
-	"fmt"
-	"reflect"
-	"strings"
 
 	"github.com/cloudstateio/go-support/cloudstate/entity"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 )
 
@@ -94,22 +90,6 @@ func (c *Context) Command() *entity.ActionCommand {
 
 func (c *Context) Metadata() *protocol.Metadata {
 	return c.metadata
-}
-
-// runCommand responds with effects, a response, a forward or a
-// failure using the action.Context passed to the command handler.
-func (c *Context) runCommand(cmd *entity.ActionCommand) error {
-	// unmarshal the commands message
-	msgName := strings.TrimPrefix(cmd.GetPayload().GetTypeUrl(), "type.googleapis.com/")
-	messageType := proto.MessageType(msgName)
-	message, ok := reflect.New(messageType.Elem()).Interface().(proto.Message)
-	if !ok {
-		return fmt.Errorf("messageType is no proto.Message: %v", messageType)
-	}
-	if err := proto.Unmarshal(cmd.Payload.Value, message); err != nil {
-		return err
-	}
-	return c.Instance.HandleCommand(c, cmd.Name, message)
 }
 
 func (c *Context) Respond(err error) error {

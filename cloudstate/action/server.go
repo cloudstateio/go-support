@@ -20,10 +20,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/cloudstateio/go-support/cloudstate/entity"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
+	"github.com/golang/protobuf/proto"
 )
 
 type (
@@ -76,11 +79,6 @@ func (s *Server) entityFor(service ServiceName) (*Entity, error) {
 	return e, nil
 }
 
-type runner struct {
-	context  *Context
-	response *entity.ActionResponse
-}
-
 // HandleUnary handles an unary command. The input command will contain the
 // service name, command name, request metadata and the command payload. The
 // reply may contain a direct reply, a forward or a failure, and it may contain
@@ -98,7 +96,7 @@ func (s *Server) HandleUnary(ctx context.Context, command *entity.ActionCommand)
 		metadata:    command.Metadata,
 		sideEffects: make([]*protocol.SideEffect, 0),
 	}}
-	err = r.context.runCommand(command)
+	err = r.runCommand(command)
 	if err != nil && !errors.Is(err, protocol.ClientError{}) {
 		return nil, err
 	}
@@ -168,7 +166,7 @@ func (s *Server) HandleStreamedIn(stream entity.ActionProtocol_HandleStreamedInS
 		if err != nil {
 			return err
 		}
-		err = r.context.runCommand(cmd)
+		err = r.runCommand(cmd)
 		if err != nil {
 			r.context.failure = err
 		}
@@ -215,7 +213,7 @@ func (s *Server) HandleStreamedOut(command *entity.ActionCommand, stream entity.
 	for {
 		// No matter what error runCommand returns here, we take it as an error
 		// to stop the stream as errors are sent through action.Context.Respond.
-		if err = r.context.runCommand(command); err != nil {
+		if err = r.runCommand(command); err != nil {
 			return err
 		}
 		if r.context.cancelled {
@@ -300,10 +298,31 @@ func (s *Server) HandleStreamed(stream entity.ActionProtocol_HandleStreamedServe
 		cmd.ServiceName = r.context.command.ServiceName
 		cmd.Name = r.context.command.Name
 		cmd.Metadata = r.context.command.Metadata
-		if err = r.context.runCommand(cmd); err != nil {
+		if err = r.runCommand(cmd); err != nil {
 			r.context.failure = err
 		}
 	}
+}
+
+type runner struct {
+	context  *Context
+	response *entity.ActionResponse
+}
+
+// runCommand responds with effects, a response, a forward or a
+// failure using the action.Context passed to the command handler.
+func (r *runner) runCommand(cmd *entity.ActionCommand) error {
+	// unmarshal the commands message
+	msgName := strings.TrimPrefix(cmd.GetPayload().GetTypeUrl(), "type.googleapis.com/")
+	messageType := proto.MessageType(msgName)
+	message, ok := reflect.New(messageType.Elem()).Interface().(proto.Message)
+	if !ok {
+		return fmt.Errorf("messageType is no proto.Message: %v", messageType)
+	}
+	if err := proto.Unmarshal(cmd.Payload.Value, message); err != nil {
+		return err
+	}
+	return r.context.Instance.HandleCommand(r.context, cmd.Name, message)
 }
 
 // actionResponse returns an action response depending on the runners
