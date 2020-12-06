@@ -32,11 +32,11 @@ func NewTestModel() action.EntityHandler {
 }
 
 func (m *TestModel) HandleCommand(ctx *action.Context, name string, msg proto.Message) error {
-	var failure error
 	ctx.CloseFunc(func(c *action.Context) error {
-		return failure
+		return nil
 	})
 
+	var failure error
 	switch r := msg.(type) {
 	case *Request:
 		for _, g := range r.GetGroups() {
@@ -82,7 +82,7 @@ func (m *TestModel) HandleCommand(ctx *action.Context, name string, msg proto.Me
 					failure = protocol.ClientError{Err: errors.New(s.Fail.Message)}
 				}
 			}
-			if ctx.Command().GetName() == "ProcessStreamedOut" || ctx.Command().GetName() == "ProcessStreamed" {
+			if name == "ProcessStreamedOut" || name == "ProcessStreamed" {
 				err := ctx.Respond(failure)
 				if err != nil {
 					return err
@@ -90,8 +90,9 @@ func (m *TestModel) HandleCommand(ctx *action.Context, name string, msg proto.Me
 			}
 		}
 	}
-	if ctx.Command().GetName() == "ProcessStreamedOut" || ctx.Command().GetName() == "ProcessStreamed" {
+	if name == "ProcessStreamedOut" || name == "ProcessStreamed" {
 		ctx.Cancel()
+		return nil
 	}
 	return failure
 }

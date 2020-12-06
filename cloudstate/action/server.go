@@ -59,7 +59,7 @@ func (s *Server) Register(e *Entity) error {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, exists := s.entities[e.ServiceName]; exists {
+	if _, ok := s.entities[e.ServiceName]; ok {
 		return fmt.Errorf("an entity with service name: %q is already registered", e.ServiceName)
 	}
 	s.entities[e.ServiceName] = e
@@ -197,7 +197,7 @@ func (s *Server) HandleStreamedOut(command *entity.ActionCommand, stream entity.
 		metadata:    command.Metadata,
 		sideEffects: make([]*protocol.SideEffect, 0),
 	}}
-	r.context.RespondFunc(func(c *Context) error {
+	r.context.respondFunc(func(c *Context) error {
 		r.response, err = r.actionResponse()
 		if err != nil {
 			return err
@@ -206,14 +206,18 @@ func (s *Server) HandleStreamedOut(command *entity.ActionCommand, stream entity.
 			return err
 		}
 		r.response = nil
-		r.context.reply = nil
+		r.context.response = nil
 		r.context.forward = nil
 		r.context.failure = nil
 		r.context.sideEffects = make([]*protocol.SideEffect, 0)
 		return nil
 	})
 	for {
-		r.context.failure = r.context.runCommand(command)
+		// No matter what error runCommand returns here, we take it as an error
+		// to stop the stream as errors are sent through action.Context.Respond.
+		if err = r.context.runCommand(command); err != nil {
+			return err
+		}
 		if r.context.cancelled {
 			return nil
 		}
@@ -264,19 +268,18 @@ func (s *Server) HandleStreamed(stream entity.ActionProtocol_HandleStreamedServe
 		metadata:    first.Metadata,
 		sideEffects: make([]*protocol.SideEffect, 0),
 	}}
-	r.context.RespondFunc(func(c *Context) error {
+	r.context.respondFunc(func(c *Context) error {
 		r.response, err = r.actionResponse()
 		if err != nil {
 			return err
 		}
-		err = stream.Send(r.response)
-		if err != nil {
+		if err = stream.Send(r.response); err != nil {
 			return err
 		}
 		r.response = nil
-		r.context.reply = nil
-		r.context.forward = nil
 		r.context.failure = nil
+		r.context.response = nil
+		r.context.forward = nil
 		r.context.sideEffects = make([]*protocol.SideEffect, 0)
 		return nil
 	})
@@ -285,8 +288,7 @@ func (s *Server) HandleStreamed(stream entity.ActionProtocol_HandleStreamedServe
 		if err == io.EOF {
 			// The client closed the stream.
 			if r.context.close != nil {
-				err := r.context.close(r.context)
-				if err != nil {
+				if err := r.context.close(r.context); err != nil {
 					r.context.failure = err
 				}
 			}
@@ -298,13 +300,14 @@ func (s *Server) HandleStreamed(stream entity.ActionProtocol_HandleStreamedServe
 		cmd.ServiceName = r.context.command.ServiceName
 		cmd.Name = r.context.command.Name
 		cmd.Metadata = r.context.command.Metadata
-		err = r.context.runCommand(cmd)
-		if err != nil {
+		if err = r.context.runCommand(cmd); err != nil {
 			r.context.failure = err
 		}
 	}
 }
 
+// actionResponse returns an action response depending on the runners
+// current state.
 func (r *runner) actionResponse() (*entity.ActionResponse, error) {
 	if r.context.failure != nil {
 		return &entity.ActionResponse{
@@ -316,11 +319,11 @@ func (r *runner) actionResponse() (*entity.ActionResponse, error) {
 			SideEffects: r.context.sideEffects,
 		}, nil
 	}
-	if r.context.reply != nil {
+	if r.context.response != nil {
 		return &entity.ActionResponse{
 			Response: &entity.ActionResponse_Reply{
 				Reply: &protocol.Reply{
-					Payload:  r.context.reply,
+					Payload:  r.context.response,
 					Metadata: r.context.command.Metadata,
 				},
 			},
