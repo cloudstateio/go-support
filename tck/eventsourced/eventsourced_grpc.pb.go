@@ -61,7 +61,7 @@ type UnsafeEventSourcedTckModelServer interface {
 	mustEmbedUnimplementedEventSourcedTckModelServer()
 }
 
-func RegisterEventSourcedTckModelServer(s *grpc.Server, srv EventSourcedTckModelServer) {
+func RegisterEventSourcedTckModelServer(s grpc.ServiceRegistrar, srv EventSourcedTckModelServer) {
 	s.RegisterService(&_EventSourcedTckModel_serviceDesc, srv)
 }
 
@@ -144,7 +144,7 @@ type UnsafeEventSourcedTwoServer interface {
 	mustEmbedUnimplementedEventSourcedTwoServer()
 }
 
-func RegisterEventSourcedTwoServer(s *grpc.Server, srv EventSourcedTwoServer) {
+func RegisterEventSourcedTwoServer(s grpc.ServiceRegistrar, srv EventSourcedTwoServer) {
 	s.RegisterService(&_EventSourcedTwo_serviceDesc, srv)
 }
 

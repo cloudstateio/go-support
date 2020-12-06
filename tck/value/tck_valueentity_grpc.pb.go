@@ -61,7 +61,7 @@ type UnsafeValueEntityTckModelServer interface {
 	mustEmbedUnimplementedValueEntityTckModelServer()
 }
 
-func RegisterValueEntityTckModelServer(s *grpc.Server, srv ValueEntityTckModelServer) {
+func RegisterValueEntityTckModelServer(s grpc.ServiceRegistrar, srv ValueEntityTckModelServer) {
 	s.RegisterService(&_ValueEntityTckModel_serviceDesc, srv)
 }
 
@@ -144,7 +144,7 @@ type UnsafeValueEntityTwoServer interface {
 	mustEmbedUnimplementedValueEntityTwoServer()
 }
 
-func RegisterValueEntityTwoServer(s *grpc.Server, srv ValueEntityTwoServer) {
+func RegisterValueEntityTwoServer(s grpc.ServiceRegistrar, srv ValueEntityTwoServer) {
 	s.RegisterService(&_ValueEntityTwo_serviceDesc, srv)
 }
 

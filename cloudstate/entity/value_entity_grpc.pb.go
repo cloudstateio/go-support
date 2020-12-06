@@ -97,7 +97,7 @@ type UnsafeValueEntityServer interface {
 	mustEmbedUnimplementedValueEntityServer()
 }
 
-func RegisterValueEntityServer(s *grpc.Server, srv ValueEntityServer) {
+func RegisterValueEntityServer(s grpc.ServiceRegistrar, srv ValueEntityServer) {
 	s.RegisterService(&_ValueEntity_serviceDesc, srv)
 }
 

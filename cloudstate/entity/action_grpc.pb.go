@@ -293,7 +293,7 @@ type UnsafeActionProtocolServer interface {
 	mustEmbedUnimplementedActionProtocolServer()
 }
 
-func RegisterActionProtocolServer(s *grpc.Server, srv ActionProtocolServer) {
+func RegisterActionProtocolServer(s grpc.ServiceRegistrar, srv ActionProtocolServer) {
 	s.RegisterService(&_ActionProtocol_serviceDesc, srv)
 }
 

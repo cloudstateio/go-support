@@ -125,7 +125,7 @@ type UnsafePresenceServer interface {
 	mustEmbedUnimplementedPresenceServer()
 }
 
-func RegisterPresenceServer(s *grpc.Server, srv PresenceServer) {
+func RegisterPresenceServer(s grpc.ServiceRegistrar, srv PresenceServer) {
 	s.RegisterService(&_Presence_serviceDesc, srv)
 }
 

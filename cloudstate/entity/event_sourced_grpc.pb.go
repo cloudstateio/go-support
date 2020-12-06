@@ -103,7 +103,7 @@ type UnsafeEventSourcedServer interface {
 	mustEmbedUnimplementedEventSourcedServer()
 }
 
-func RegisterEventSourcedServer(s *grpc.Server, srv EventSourcedServer) {
+func RegisterEventSourcedServer(s grpc.ServiceRegistrar, srv EventSourcedServer) {
 	s.RegisterService(&_EventSourced_serviceDesc, srv)
 }
 

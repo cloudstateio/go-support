@@ -62,7 +62,7 @@ type UnsafeHotItemsServiceServer interface {
 	mustEmbedUnimplementedHotItemsServiceServer()
 }
 
-func RegisterHotItemsServiceServer(s *grpc.Server, srv HotItemsServiceServer) {
+func RegisterHotItemsServiceServer(s grpc.ServiceRegistrar, srv HotItemsServiceServer) {
 	s.RegisterService(&_HotItemsService_serviceDesc, srv)
 }
 

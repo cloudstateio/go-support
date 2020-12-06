@@ -196,7 +196,7 @@ type UnsafeTckCrdtServer interface {
 	mustEmbedUnimplementedTckCrdtServer()
 }
 
-func RegisterTckCrdtServer(s *grpc.Server, srv TckCrdtServer) {
+func RegisterTckCrdtServer(s grpc.ServiceRegistrar, srv TckCrdtServer) {
 	s.RegisterService(&_TckCrdt_serviceDesc, srv)
 }
 
