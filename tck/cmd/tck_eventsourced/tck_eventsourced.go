@@ -152,7 +152,6 @@ func main() {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}
 
-	// end::event-sourced-entity-type[]
 	err = server.Run()
 	if err != nil {
 		log.Fatalf("Cloudstate failed to run: %v", err)
