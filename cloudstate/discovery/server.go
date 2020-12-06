@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/cloudstateio/go-support/cloudstate/action"
 	"github.com/cloudstateio/go-support/cloudstate/crdt"
 	"github.com/cloudstateio/go-support/cloudstate/eventsourced"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
@@ -141,6 +142,19 @@ func (s *EntityDiscoveryServer) RegisterCRDTEntity(entity *crdt.Entity, config p
 	}
 	s.entitySpec.Entities = append(s.entitySpec.Entities, &protocol.Entity{
 		EntityType:  protocol.CRDT,
+		ServiceName: entity.ServiceName.String(),
+	})
+	return s.updateSpec()
+}
+
+func (s *EntityDiscoveryServer) RegisterActionEntity(entity *action.Entity, config protocol.DescriptorConfig) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.resolveFileDescriptors(config); err != nil {
+		return fmt.Errorf("failed to resolveFileDescriptor for DescriptorConfig: %+v: %w", config, err)
+	}
+	s.entitySpec.Entities = append(s.entitySpec.Entities, &protocol.Entity{
+		EntityType:  protocol.Action,
 		ServiceName: entity.ServiceName.String(),
 	})
 	return s.updateSpec()

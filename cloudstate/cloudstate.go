@@ -22,6 +22,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/cloudstateio/go-support/cloudstate/action"
 	"github.com/cloudstateio/go-support/cloudstate/crdt"
 	"github.com/cloudstateio/go-support/cloudstate/discovery"
 	"github.com/cloudstateio/go-support/cloudstate/entity"
@@ -36,6 +37,7 @@ type CloudState struct {
 	entityDiscoveryServer *discovery.EntityDiscoveryServer
 	eventSourcedServer    *eventsourced.Server
 	crdtServer            *crdt.Server
+	actionServer          *action.Server
 }
 
 // New returns a new CloudState instance.
@@ -45,10 +47,12 @@ func New(c protocol.Config) (*CloudState, error) {
 		entityDiscoveryServer: discovery.NewServer(c),
 		eventSourcedServer:    eventsourced.NewServer(),
 		crdtServer:            crdt.NewServer(),
+		actionServer:          action.NewServer(),
 	}
 	protocol.RegisterEntityDiscoveryServer(cs.grpcServer, cs.entityDiscoveryServer)
 	entity.RegisterEventSourcedServer(cs.grpcServer, cs.eventSourcedServer)
 	entity.RegisterCrdtServer(cs.grpcServer, cs.crdtServer)
+	entity.RegisterActionProtocolServer(cs.grpcServer, cs.actionServer)
 	return cs, nil
 }
 
@@ -69,6 +73,17 @@ func (cs *CloudState) RegisterCRDT(entity *crdt.Entity, config protocol.Descript
 		return err
 	}
 	if err := cs.entityDiscoveryServer.RegisterCRDTEntity(entity, config); err != nil {
+		return err
+	}
+	return nil
+}
+
+// RegisterCRDT registers a CRDT entity.
+func (cs *CloudState) RegisterAction(entity *action.Entity, config protocol.DescriptorConfig) error {
+	if err := cs.actionServer.Register(entity); err != nil {
+		return err
+	}
+	if err := cs.entityDiscoveryServer.RegisterActionEntity(entity, config); err != nil {
 		return err
 	}
 	return nil

@@ -13,10 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package protocol
+package action
 
-const (
-	EventSourced = "cloudstate.eventsourced.EventSourced"
-	CRDT         = "cloudstate.crdt.Crdt"
-	Action       = "cloudstate.action.ActionProtocol"
+import (
+	"github.com/golang/protobuf/proto"
 )
+
+type Entity struct {
+	// ServiceName is the fully qualified name of the service that implements
+	// this entities interface. Setting it is mandatory.
+	ServiceName ServiceName
+	// EntityFunc creates a new entity.
+	EntityFunc func() EntityHandler
+}
+
+type EntityHandler interface {
+	HandleCommand(ctx *Context, name string, msg proto.Message) error
+}

@@ -19,10 +19,12 @@ import (
 	"log"
 
 	"github.com/cloudstateio/go-support/cloudstate"
+	"github.com/cloudstateio/go-support/cloudstate/action"
 	"github.com/cloudstateio/go-support/cloudstate/crdt"
 	"github.com/cloudstateio/go-support/cloudstate/eventsourced"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/cloudstateio/go-support/example/shoppingcart"
+	actionTCK "github.com/cloudstateio/go-support/tck/action"
 	"github.com/cloudstateio/go-support/tck/crdt2"
 	tck "github.com/cloudstateio/go-support/tck/eventsourced"
 )
@@ -77,6 +79,25 @@ func main() {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}
 	// end::event-sourced-entity-type[]
+
+	err = server.RegisterAction(&action.Entity{
+		ServiceName: "cloudstate.tck.model.action.ActionTckModel",
+		EntityFunc:  actionTCK.NewTestModel,
+	}, protocol.DescriptorConfig{
+		Service: "tck_action.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+	err = server.RegisterAction(&action.Entity{
+		ServiceName: "cloudstate.tck.model.action.ActionTwo",
+		EntityFunc:  actionTCK.NewTestModelTwo,
+	}, protocol.DescriptorConfig{
+		Service: "tck_action.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
 
 	err = server.RegisterCRDT(&crdt.Entity{
 		ServiceName: "cloudstate.tck.model.crdt.CrdtTckModel",

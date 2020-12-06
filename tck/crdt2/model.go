@@ -53,7 +53,6 @@ func (e *CrdtTckModelEntity) processStreamed(ctx *crdt.CommandContext, name stri
 	if !ok {
 		return nil, nil
 	}
-	fmt.Printf("processStreamed: %+v\n", ctx.EntityID)
 	if ctx.Streamed() {
 		ctx.ChangeFunc(func(c *crdt.CommandContext) (*any.Any, error) {
 			for _, effect := range r.GetEffects() {
