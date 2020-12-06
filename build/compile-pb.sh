@@ -14,8 +14,6 @@ protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protob
 protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate event_sourced.proto
 protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate action.proto
 protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate action.proto
-protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate value_entity.proto
-protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate value_entity.proto
 
 # TCK CRDT
 protoc --go-grpc_out=paths=source_relative:./tck/crdt \
@@ -30,6 +28,20 @@ protoc --go_out=paths=source_relative:./tck/crdt \
   --proto_path=protobuf/frontend/cloudstate \
   --proto_path=protobuf/proxy \
   --proto_path=protobuf/tck tck_crdt.proto
+
+# TCK CRDT2
+protoc --go-grpc_out=paths=source_relative:./tck/crdt2 \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=protobuf/tck tck_crdt2.proto
+protoc --go_out=paths=source_relative:./tck/crdt2 \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=protobuf/tck tck_crdt2.proto
 
 # TCK Eventsourced
 protoc --go-grpc_out=paths=source_relative:./tck/eventsourced \

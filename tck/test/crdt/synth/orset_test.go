@@ -65,8 +65,8 @@ func TestCRDTORSet(t *testing.T) {
 				}
 				tr.expectedOneIn(r.GetValue().GetValues(), one)
 				// state
-				tr.expectedNotNil(m.Reply.GetStateAction().GetCreate())
-				tr.expectedOneIn(m.Reply.GetStateAction().GetCreate().GetOrset().GetItems(), one)
+				tr.expectedNotNil(m.Reply.GetStateAction().GetUpdate())
+				tr.expectedOneIn(m.Reply.GetStateAction().GetUpdate().GetOrset().GetAdded(), one)
 			default:
 				tr.unexpected(m)
 			}

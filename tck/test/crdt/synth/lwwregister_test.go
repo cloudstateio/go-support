@@ -44,41 +44,6 @@ func TestCRDTLWWRegister(t *testing.T) {
 		defer p.teardown()
 
 		p.init(&entity.CrdtInit{ServiceName: serviceName, EntityId: entityID})
-		t.Run("LWWRegisterSet emits client action and create state action", func(t *testing.T) {
-			tr := tester{t}
-			one, err := encoding.Struct(pair{"one", 1})
-			if err != nil {
-				t.Fatal(err)
-			}
-			switch m := p.command(entityID, command, lwwRegisterRequest(&crdt.LWWRegisterSet{
-				Value: &crdt.AnySupportType{
-					Value: &crdt.AnySupportType_AnyValue{AnyValue: one},
-				},
-			}),
-			).Message.(type) {
-			case *entity.CrdtStreamOut_Reply:
-				// action reply
-				tr.expectedNil(m.Reply.GetSideEffects())
-				tr.expectedNil(m.Reply.GetClientAction().GetFailure())
-				var r crdt.LWWRegisterResponse
-				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
-				one, err := encoding.Struct(pair{"one", 1})
-				if err != nil {
-					t.Fatal(err)
-				}
-				tr.expectedOneIn([]*any.Any{r.GetValue().GetValue()}, one)
-				// state action
-				tr.expectedNotNil(m.Reply.GetStateAction().GetCreate())
-				tr.expectedNil(m.Reply.GetStateAction().GetUpdate())
-				tr.expectedNil(m.Reply.GetStateAction().GetDelete())
-				var p pair
-				tr.expectedTrue(m.Reply.GetStateAction().GetCreate().GetLwwregister().GetClock() == entity.CrdtClock_DEFAULT)
-				tr.toStruct(m.Reply.GetStateAction().GetCreate().GetLwwregister().GetValue(), &p)
-				tr.expectedTrue(reflect.DeepEqual(p, pair{"one", 1}))
-			default:
-				tr.unexpected(m)
-			}
-		})
 		t.Run("LWWRegisterSetWithClock emits client action and update state action", func(t *testing.T) {
 			tr := tester{t}
 			two, err := encoding.Struct(pair{"two", 2})
@@ -105,7 +70,6 @@ func TestCRDTLWWRegister(t *testing.T) {
 				}
 				tr.expectedOneIn([]*any.Any{r.GetValue().GetValue()}, two)
 				// state action
-				tr.expectedNil(m.Reply.GetStateAction().GetCreate())
 				tr.expectedNotNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNil(m.Reply.GetStateAction().GetDelete())
 				var p pair
@@ -127,7 +91,6 @@ func TestCRDTLWWRegister(t *testing.T) {
 				var r crdt.LWWRegisterResponse
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
 				// state action
-				tr.expectedNil(m.Reply.GetStateAction().GetCreate())
 				tr.expectedNil(m.Reply.GetStateAction().GetUpdate())
 				tr.expectedNotNil(m.Reply.GetStateAction().GetDelete())
 			default:

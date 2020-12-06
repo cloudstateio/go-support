@@ -20,12 +20,14 @@ import (
 
 	"github.com/cloudstateio/go-support/cloudstate"
 	"github.com/cloudstateio/go-support/cloudstate/action"
+	"github.com/cloudstateio/go-support/cloudstate/crdt"
 	"github.com/cloudstateio/go-support/cloudstate/eventsourced"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/cloudstateio/go-support/cloudstate/value"
 	"github.com/cloudstateio/go-support/example/shoppingcart"
 	tck_value "github.com/cloudstateio/go-support/example/valueentity"
 	actionTCK "github.com/cloudstateio/go-support/tck/action"
+	"github.com/cloudstateio/go-support/tck/crdt2"
 	tck "github.com/cloudstateio/go-support/tck/eventsourced"
 	valueentity "github.com/cloudstateio/go-support/tck/value"
 )
@@ -99,6 +101,24 @@ func main() {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}
 
+	err = server.RegisterCRDT(&crdt.Entity{
+		ServiceName: "cloudstate.tck.model.crdt.CrdtTckModel",
+		EntityFunc:  crdt2.NewCrdtTckModelEntity,
+	}, protocol.DescriptorConfig{
+		Service: "tck_crdt2.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+	err = server.RegisterCRDT(&crdt.Entity{
+		ServiceName: "cloudstate.tck.model.crdt.CrdtTwo",
+		EntityFunc:  crdt2.NewCrdtTwoEntity,
+	}, protocol.DescriptorConfig{
+		Service: "tck_crdt2.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
 	err = server.RegisterValueEntity(&value.Entity{
 		ServiceName:   "cloudstate.tck.model.valueentity.ValueEntityTckModel",
 		EntityFunc:    valueentity.NewValueEntityTckModelEntity,
@@ -132,6 +152,7 @@ func main() {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}
 
+	// end::event-sourced-entity-type[]
 	err = server.Run()
 	if err != nil {
 		log.Fatalf("Cloudstate failed to run: %v", err)

@@ -22,7 +22,6 @@ import (
 
 	"github.com/cloudstateio/go-support/cloudstate/crdt"
 	"github.com/cloudstateio/go-support/cloudstate/encoding"
-	"github.com/cloudstateio/go-support/cloudstate/entity"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -381,8 +380,8 @@ func orMapResponse(orMap *crdt.ORMap) *ORMapResponse {
 	}
 	for _, k := range orMap.Keys() {
 		var value *any.Any
-		switch s := orMap.Get(k).State().State.(type) {
-		case *entity.CrdtState_Gcounter:
+		switch s := orMap.Get(k).(type) {
+		case *crdt.GCounter:
 			val, err := encoding.Struct(s)
 			if err != nil {
 				panic(err)

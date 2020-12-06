@@ -40,11 +40,7 @@ func TestLWWRegister(t *testing.T) {
 		if example.Field1 != "foo" {
 			t.Fatalf("example.Field1: %v; want: %v", example.Field1, "foo")
 		}
-		if r.HasDelta() {
-			t.Fatalf("register has delta but should not")
-		}
-		state := encDecState(r.State())
-		err = encoding.UnmarshalJSON(state.GetLwwregister().GetValue(), &example)
+		err = encoding.UnmarshalJSON(r.Value(), &example)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -54,38 +50,6 @@ func TestLWWRegister(t *testing.T) {
 		}
 		if r.clock != Default {
 			t.Fatalf("r.clock: %v; want: %v", r.clock, Default)
-		}
-	})
-
-	t.Run("should reflect a state update", func(t *testing.T) {
-		bar, err := encoding.Struct(Example{Field1: "bar"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		r := LWWRegister{
-			value: bar,
-		}
-		foo, err := encoding.Struct(Example{Field1: "foo"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := r.applyState(encDecState(
-			&entity.CrdtState{
-				State: &entity.CrdtState_Lwwregister{
-					Lwwregister: &entity.LWWRegisterState{
-						Value: foo,
-					},
-				},
-			},
-		)); err != nil {
-			t.Fatal(err)
-		}
-		example := Example{}
-		if err := encoding.UnmarshalJSON(r.Value(), &example); err != nil {
-			t.Fatal(err)
-		}
-		if example.Field1 != "foo" {
-			t.Fatalf("example.Field1: %v; want: %v", example.Field1, "foo")
 		}
 	})
 
@@ -170,7 +134,6 @@ func TestLWWRegister(t *testing.T) {
 			t.Fatal(err)
 		}
 		r := NewLWWRegister(foo)
-		// r.Set(encoding.Struct(Example{Field1: "foo"})) // TODO: this is not the same, check
 		bar, err := encoding.Struct(Example{Field1: "bar"})
 		if err != nil {
 			t.Fatal(err)
@@ -197,7 +160,7 @@ func TestLWWRegister(t *testing.T) {
 			t.Fatalf("register has delta but should not")
 		}
 		e2 := Example{}
-		err = encoding.UnmarshalJSON(encDecState(r.State()).GetLwwregister().GetValue(), &e2)
+		err = encoding.UnmarshalJSON(r.Value(), &e2)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -208,9 +171,8 @@ func TestLWWRegister(t *testing.T) {
 
 	t.Run("should work with primitive types", func(t *testing.T) {
 		r := NewLWWRegister(encoding.String("momo"))
-		state := encDecState(r.State())
 		r.resetDelta()
-		stateValue := encoding.DecodeString(state.GetLwwregister().GetValue())
+		stateValue := encoding.DecodeString(r.Value())
 		if stateValue != "momo" {
 			t.Fatalf("stateValue: %v; want: %v", stateValue, "momo")
 		}

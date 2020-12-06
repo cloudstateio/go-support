@@ -75,9 +75,9 @@ type command struct {
 	m proto.Message
 }
 
-type state struct {
-	s *entity.CrdtState
-}
+// type state struct {
+// 	s *entity.CrdtState
+// }
 
 type delta struct {
 	d *entity.CrdtDelta
@@ -109,56 +109,6 @@ func (p *proxy) init(i *entity.CrdtInit) {
 	if err != nil {
 		p.t.Fatal(err)
 	}
-}
-
-func (p *proxy) state(m proto.Message) {
-	switch s := m.(type) {
-	case *entity.PNCounterState:
-		p.sendState(state{
-			&entity.CrdtState{State: &entity.CrdtState_Pncounter{
-				Pncounter: s,
-			}},
-		})
-	case *entity.GCounterState:
-		p.sendState(state{
-			&entity.CrdtState{State: &entity.CrdtState_Gcounter{
-				Gcounter: s,
-			}},
-		})
-	case *entity.FlagState:
-		p.sendState(state{
-			&entity.CrdtState{State: &entity.CrdtState_Flag{
-				Flag: s,
-			}},
-		})
-	case *entity.VoteState:
-		p.sendState(state{
-			&entity.CrdtState{State: &entity.CrdtState_Vote{
-				Vote: s,
-			}},
-		})
-	case *entity.ORMapState:
-		p.sendState(state{
-			&entity.CrdtState{State: &entity.CrdtState_Ormap{
-				Ormap: s,
-			}},
-		})
-	default:
-		p.t.Fatal("state type not found")
-	}
-}
-
-func (p *proxy) sendState(st state) {
-	if err := p.h.Send(stateMsg(st.s)); err != nil {
-		p.t.Fatal(err)
-	}
-}
-
-func (p *proxy) sendRecvState(st state) (*entity.CrdtStreamOut, error) {
-	if err := p.h.Send(stateMsg(st.s)); err != nil {
-		return nil, err
-	}
-	return p.Recv()
 }
 
 func (p *proxy) delta(m proto.Message) {
@@ -298,26 +248,18 @@ func commandMsg(c *protocol.Command) *entity.CrdtStreamIn {
 	}
 }
 
-func stateMsg(s *entity.CrdtState) *entity.CrdtStreamIn {
-	return &entity.CrdtStreamIn{
-		Message: &entity.CrdtStreamIn_State{
-			State: s,
-		},
-	}
-}
-
 func deltaMsg(d *entity.CrdtDelta) *entity.CrdtStreamIn {
 	return &entity.CrdtStreamIn{
-		Message: &entity.CrdtStreamIn_Changed{
-			Changed: d,
+		Message: &entity.CrdtStreamIn_Delta{
+			Delta: d,
 		},
 	}
 }
 
 func deleteMsg(d *entity.CrdtDelete) *entity.CrdtStreamIn {
 	return &entity.CrdtStreamIn{
-		Message: &entity.CrdtStreamIn_Deleted{
-			Deleted: d,
+		Message: &entity.CrdtStreamIn_Delete{
+			Delete: d,
 		},
 	}
 }

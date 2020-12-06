@@ -18,9 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CrdtClient interface {
 	// After invoking handle, the first message sent will always be a CrdtInit message, containing the entity ID, and,
-	// if it exists or is available, the current state of the entity. After that, one or more commands may be sent,
-	// as well as deltas as they arrive, and the entire state if either the entity is created, or the proxy wishes the
-	// user function to replace its entire state.
+	// if it exists or is available, a delta for the inital state of the entity. After that, one or more commands may
+	// be sent, as well as deltas as they arrive.
 	//
 	// The user function must respond with one reply per command in. They do not necessarily have to be sent in the same
 	// order that the commands were sent, the command ID is used to correlate commands to replies.
@@ -71,9 +70,8 @@ func (x *crdtHandleClient) Recv() (*CrdtStreamOut, error) {
 // for forward compatibility
 type CrdtServer interface {
 	// After invoking handle, the first message sent will always be a CrdtInit message, containing the entity ID, and,
-	// if it exists or is available, the current state of the entity. After that, one or more commands may be sent,
-	// as well as deltas as they arrive, and the entire state if either the entity is created, or the proxy wishes the
-	// user function to replace its entire state.
+	// if it exists or is available, a delta for the inital state of the entity. After that, one or more commands may
+	// be sent, as well as deltas as they arrive.
 	//
 	// The user function must respond with one reply per command in. They do not necessarily have to be sent in the same
 	// order that the commands were sent, the command ID is used to correlate commands to replies.

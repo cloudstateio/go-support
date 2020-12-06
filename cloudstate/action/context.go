@@ -17,13 +17,9 @@ package action
 
 import (
 	"context"
-	"fmt"
-	"reflect"
-	"strings"
 
 	"github.com/cloudstateio/go-support/cloudstate/entity"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 )
 
@@ -41,37 +37,40 @@ type Context struct {
 	command  *entity.ActionCommand
 	metadata *protocol.Metadata
 
-	respond RespondFunc
-	cancel  CancelFunc
-	close   CloseFunc
-
-	cancelled   bool
-	reply       *any.Any
-	forward     *protocol.Forward
 	failure     error
+	response    *any.Any
+	forward     *protocol.Forward
 	sideEffects []*protocol.SideEffect
+
+	// respond is the function to be used for streamed responses.
+	respond RespondFunc
+	// cancel is the function called when a client closes a stream. With the
+	// then half-closed stream, the user function can choose to respond with
+	// an action response.
+	cancel CancelFunc
+	// close is called whenever a client closes a stream.
+	close     CloseFunc
+	cancelled bool
 }
 
 func (c *Context) RespondWith(reply *any.Any) {
-	c.forward = nil
 	c.failure = nil
-	c.reply = reply
+	c.response = reply
+	c.forward = nil
 }
 
 func (c *Context) Forward(forward *protocol.Forward) {
-	c.forward = forward
 	c.failure = nil
-	c.reply = nil
+	c.response = nil
+	c.forward = forward
 }
 
 func (c *Context) SideEffect(effect *protocol.SideEffect) {
 	c.sideEffects = append(c.sideEffects, effect)
 }
 
-func (c *Context) RespondFunc(respond RespondFunc) {
-	c.respond = respond
-}
-
+// CloseFunc registers a function that is called whenever a client closes a
+// stream.
 func (c *Context) CloseFunc(close CloseFunc) {
 	c.close = close
 }
@@ -80,6 +79,7 @@ func (c *Context) CancellationFunc(cancel CancelFunc) {
 	c.cancel = cancel
 }
 
+// Cancel cancels server command streaming.
 func (c *Context) Cancel() {
 	c.cancelled = true
 }
@@ -92,28 +92,14 @@ func (c *Context) Metadata() *protocol.Metadata {
 	return c.metadata
 }
 
-func (c *Context) Response() *any.Any {
-	return c.reply
-}
-
-func (c *Context) runCommand(cmd *entity.ActionCommand) error {
-	// unmarshal the commands message
-	msgName := strings.TrimPrefix(cmd.GetPayload().GetTypeUrl(), "type.googleapis.com/")
-	messageType := proto.MessageType(msgName)
-	message, ok := reflect.New(messageType.Elem()).Interface().(proto.Message)
-	if !ok {
-		return fmt.Errorf("messageType is no proto.Message: %v", messageType)
-	}
-	if err := proto.Unmarshal(cmd.Payload.Value, message); err != nil {
-		return err
-	}
-	return c.Instance.HandleCommand(c, cmd.Name, message)
-}
-
 func (c *Context) Respond(err error) error {
 	if c.respond != nil {
 		c.failure = err
 		return c.respond(c)
 	}
 	return nil
+}
+
+func (c *Context) respondFunc(respond RespondFunc) {
+	c.respond = respond
 }

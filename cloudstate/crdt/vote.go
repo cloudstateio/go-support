@@ -96,14 +96,11 @@ func (v *Vote) HasDelta() bool {
 }
 
 func (v *Vote) Delta() *entity.CrdtDelta {
-	if !v.selfVoteChanged {
-		return nil
-	}
 	return &entity.CrdtDelta{
 		Delta: &entity.CrdtDelta_Vote{Vote: &entity.VoteDelta{
-			SelfVote:    v.selfVote,
-			VotesFor:    int32(v.votesFor), // TODO, we never overflow, yes?
-			TotalVoters: int32(v.voters),
+			SelfVote: v.selfVote,
+			// VotesFor:    int32(v.votesFor),
+			// TotalVoters: int32(v.voters), TODO: ignored by the proxy says the Spec, but the TCK would complain.
 		}},
 	}
 }
@@ -112,33 +109,13 @@ func (v *Vote) resetDelta() {
 	v.selfVoteChanged = false
 }
 
-func (v *Vote) State() *entity.CrdtState {
-	return &entity.CrdtState{
-		State: &entity.CrdtState_Vote{Vote: &entity.VoteState{
-			VotesFor:    v.votesFor,
-			TotalVoters: v.voters,
-			SelfVote:    v.selfVote,
-		}},
-	}
-}
-
 func (v *Vote) applyDelta(delta *entity.CrdtDelta) error {
 	d := delta.GetVote()
 	if d == nil {
 		return fmt.Errorf("unable to apply delta %+v to the Vote", delta)
 	}
+	v.selfVote = d.SelfVote
 	v.voters = uint32(d.TotalVoters)
 	v.votesFor = uint32(d.VotesFor)
-	return nil
-}
-
-func (v *Vote) applyState(state *entity.CrdtState) error {
-	s := state.GetVote()
-	if s == nil {
-		return fmt.Errorf("unable to apply state %+v to the Vote", state)
-	}
-	v.selfVote = s.SelfVote
-	v.voters = s.TotalVoters
-	v.votesFor = s.VotesFor
 	return nil
 }

@@ -23,7 +23,7 @@ import (
 
 func (m *ORMap) Flag(key *any.Any) (*Flag, error) {
 	if v, has := m.value[m.hashAny(key)]; has {
-		if flag, ok := v.value.(*Flag); ok {
+		if flag, ok := v.Value.(*Flag); ok {
 			return flag, nil
 		}
 		return nil, fmt.Errorf("value at key: %v is not of type Flag but: %+v", key, v)
@@ -33,7 +33,7 @@ func (m *ORMap) Flag(key *any.Any) (*Flag, error) {
 
 func (m *ORMap) GCounter(key *any.Any) (*GCounter, error) {
 	if v, has := m.value[m.hashAny(key)]; has {
-		if counter, ok := v.value.(*GCounter); ok {
+		if counter, ok := v.Value.(*GCounter); ok {
 			return counter, nil
 		}
 		return nil, fmt.Errorf("value at key: %v is not of type GCounter but: %+v", key, v)
@@ -43,7 +43,7 @@ func (m *ORMap) GCounter(key *any.Any) (*GCounter, error) {
 
 func (m *ORMap) GSet(key *any.Any) (*GSet, error) {
 	if v, has := m.value[m.hashAny(key)]; has {
-		if set, ok := v.value.(*GSet); ok {
+		if set, ok := v.Value.(*GSet); ok {
 			return set, nil
 		}
 		return nil, fmt.Errorf("value at key: %v is not of type GSet but: %+v", key, v)
@@ -53,7 +53,7 @@ func (m *ORMap) GSet(key *any.Any) (*GSet, error) {
 
 func (m *ORMap) LWWRegister(key *any.Any) (*LWWRegister, error) {
 	if v, has := m.value[m.hashAny(key)]; has {
-		if r, ok := v.value.(*LWWRegister); ok {
+		if r, ok := v.Value.(*LWWRegister); ok {
 			return r, nil
 		}
 		return nil, fmt.Errorf("value at key: %v is not of type LWWRegister but: %+v", key, v)
@@ -63,7 +63,7 @@ func (m *ORMap) LWWRegister(key *any.Any) (*LWWRegister, error) {
 
 func (m *ORMap) ORMap(key *any.Any) (*ORMap, error) {
 	if v, has := m.value[m.hashAny(key)]; has {
-		if m, ok := v.value.(*ORMap); ok {
+		if m, ok := v.Value.(*ORMap); ok {
 			return m, nil
 		}
 		return nil, fmt.Errorf("value at key: %v is not of type ORMap but: %+v", key, v)
@@ -73,7 +73,7 @@ func (m *ORMap) ORMap(key *any.Any) (*ORMap, error) {
 
 func (m *ORMap) ORSet(key *any.Any) (*ORSet, error) {
 	if v, has := m.value[m.hashAny(key)]; has {
-		if set, ok := v.value.(*ORSet); ok {
+		if set, ok := v.Value.(*ORSet); ok {
 			return set, nil
 		}
 		return nil, fmt.Errorf("value at key: %v is not of type ORSet but: %+v", key, v)
@@ -83,7 +83,7 @@ func (m *ORMap) ORSet(key *any.Any) (*ORSet, error) {
 
 func (m *ORMap) PNCounter(key *any.Any) (*PNCounter, error) {
 	if v, has := m.value[m.hashAny(key)]; has {
-		if c, ok := v.value.(*PNCounter); ok {
+		if c, ok := v.Value.(*PNCounter); ok {
 			return c, nil
 		}
 		return nil, fmt.Errorf("value at key: %v is not of type PNCounter but: %+v", key, v)
@@ -93,7 +93,7 @@ func (m *ORMap) PNCounter(key *any.Any) (*PNCounter, error) {
 
 func (m *ORMap) Vote(key *any.Any) (*Vote, error) {
 	if v, has := m.value[m.hashAny(key)]; has {
-		if c, ok := v.value.(*Vote); ok {
+		if c, ok := v.Value.(*Vote); ok {
 			return c, nil
 		}
 		return nil, fmt.Errorf("value at key: %v is not of type Vote but: %+v", key, v)

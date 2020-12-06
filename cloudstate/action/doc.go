@@ -13,14 +13,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package crdt
-
-import "github.com/cloudstateio/go-support/cloudstate/entity"
-
-type CRDT interface {
-	Delta() *entity.CrdtDelta
-	HasDelta() bool
-
-	applyDelta(*entity.CrdtDelta) error
-	resetDelta()
-}
+// Package action implements the Cloudstate Action protocol.
+package action

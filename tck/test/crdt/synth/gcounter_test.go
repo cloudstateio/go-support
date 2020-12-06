@@ -65,7 +65,7 @@ func TestCRDTGCounter(t *testing.T) {
 				r := crdt.GCounterResponse{}
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
 				tr.expectedUInt64(r.GetValue().GetValue(), 8)
-				tr.expectedUInt64(m.Reply.GetStateAction().GetCreate().GetGcounter().GetValue(), 8)
+				tr.expectedUInt64(m.Reply.GetStateAction().GetUpdate().GetGcounter().GetIncrement(), 8)
 			default:
 				tr.unexpected(m)
 			}
@@ -95,20 +95,20 @@ func TestCRDTGCounter(t *testing.T) {
 				tr.unexpected(m)
 			}
 		})
-		t.Run("the counter should apply new state and return its value", func(t *testing.T) {
-			tr := tester{t}
-			p.state(&entity.GCounterState{Value: 24})
-			switch m := p.command(
-				entityID, command, gcounterRequest(&crdt.Get{Key: entityID}),
-			).Message.(type) {
-			case *entity.CrdtStreamOut_Reply:
-				r := crdt.GCounterResponse{}
-				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
-				tr.expectedUInt64(r.GetValue().GetValue(), 24)
-			default:
-				tr.unexpected(m)
-			}
-		})
+		// t.Run("the counter should apply new state and return its value", func(t *testing.T) {
+		// 	tr := tester{t}
+		// 	p.state(&entity.GCounterState{Value: 24})
+		// 	switch m := p.command(
+		// 		entityID, command, gcounterRequest(&crdt.Get{Key: entityID}),
+		// 	).Message.(type) {
+		// 	case *entity.CrdtStreamOut_Reply:
+		// 		r := crdt.GCounterResponse{}
+		// 		tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
+		// 		tr.expectedUInt64(r.GetValue().GetValue(), 24)
+		// 	default:
+		// 		tr.unexpected(m)
+		// 	}
+		// })
 		t.Run("the counter should apply a delta and return its value", func(t *testing.T) {
 			tr := tester{t}
 			p.delta(&entity.GCounterDelta{Increment: 8})
@@ -118,7 +118,7 @@ func TestCRDTGCounter(t *testing.T) {
 			case *entity.CrdtStreamOut_Reply:
 				r := crdt.GCounterResponse{}
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
-				tr.expectedUInt64(r.GetValue().GetValue(), 32)
+				tr.expectedUInt64(r.GetValue().GetValue(), 24)
 			default:
 				tr.unexpected(m)
 			}
@@ -176,7 +176,8 @@ func TestCRDTGCounter(t *testing.T) {
 				r := crdt.GCounterResponse{}
 				tr.toProto(m.Reply.GetClientAction().GetReply().GetPayload(), &r)
 				tr.expectedUInt64(r.GetValue().GetValue(), 8)
-				tr.expectedUInt64(m.Reply.GetStateAction().GetCreate().GetGcounter().GetValue(), 8)
+				// tr.expectedUInt64(m.Reply.GetStateAction().GetCreate().GetGcounter().GetValue(), 8)
+				tr.expectedUInt64(m.Reply.GetStateAction().GetUpdate().GetGcounter().GetIncrement(), 8)
 			default:
 				tr.unexpected(m)
 			}
@@ -237,7 +238,7 @@ func TestCRDTGCounter(t *testing.T) {
 			entityID, command, gcounterRequest(&crdt.GCounterIncrement{Key: entityID, Value: 16}),
 		).Message.(type) {
 		case *entity.CrdtStreamOut_Reply:
-			tr.expectedUInt64(m.Reply.GetStateAction().GetCreate().GetGcounter().GetValue(), 16)
+			tr.expectedUInt64(m.Reply.GetStateAction().GetUpdate().GetGcounter().GetIncrement(), 16)
 		default:
 			tr.unexpected(m)
 		}
