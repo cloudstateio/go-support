@@ -173,7 +173,7 @@ type UnsafeActionTckModelServer interface {
 	mustEmbedUnimplementedActionTckModelServer()
 }
 
-func RegisterActionTckModelServer(s *grpc.Server, srv ActionTckModelServer) {
+func RegisterActionTckModelServer(s grpc.ServiceRegistrar, srv ActionTckModelServer) {
 	s.RegisterService(&_ActionTckModel_serviceDesc, srv)
 }
 
@@ -346,7 +346,7 @@ type UnsafeActionTwoServer interface {
 	mustEmbedUnimplementedActionTwoServer()
 }
 
-func RegisterActionTwoServer(s *grpc.Server, srv ActionTwoServer) {
+func RegisterActionTwoServer(s grpc.ServiceRegistrar, srv ActionTwoServer) {
 	s.RegisterService(&_ActionTwo_serviceDesc, srv)
 }
 

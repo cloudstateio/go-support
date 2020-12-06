@@ -127,7 +127,7 @@ type UnsafeShoppingCartServiceServer interface {
 	mustEmbedUnimplementedShoppingCartServiceServer()
 }
 
-func RegisterShoppingCartServiceServer(s *grpc.Server, srv ShoppingCartServiceServer) {
+func RegisterShoppingCartServiceServer(s grpc.ServiceRegistrar, srv ShoppingCartServiceServer) {
 	s.RegisterService(&_ShoppingCartService_serviceDesc, srv)
 }
 

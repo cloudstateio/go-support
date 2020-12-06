@@ -28,6 +28,7 @@ import (
 	"github.com/cloudstateio/go-support/cloudstate/crdt"
 	"github.com/cloudstateio/go-support/cloudstate/eventsourced"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
+	"github.com/cloudstateio/go-support/cloudstate/value"
 	"github.com/golang/protobuf/descriptor"
 	"github.com/golang/protobuf/proto"
 	filedescr "github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -156,6 +157,20 @@ func (s *EntityDiscoveryServer) RegisterActionEntity(entity *action.Entity, conf
 	s.entitySpec.Entities = append(s.entitySpec.Entities, &protocol.Entity{
 		EntityType:  protocol.Action,
 		ServiceName: entity.ServiceName.String(),
+	})
+	return s.updateSpec()
+}
+
+func (s *EntityDiscoveryServer) RegisterValueEntity(entity *value.Entity, config protocol.DescriptorConfig) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.resolveFileDescriptors(config); err != nil {
+		return fmt.Errorf("failed to resolveFileDescriptor for DescriptorConfig: %+v: %w", config, err)
+	}
+	s.entitySpec.Entities = append(s.entitySpec.Entities, &protocol.Entity{
+		EntityType:    protocol.Value,
+		ServiceName:   entity.ServiceName.String(),
+		PersistenceId: entity.PersistenceID,
 	})
 	return s.updateSpec()
 }

@@ -14,6 +14,8 @@ protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protob
 protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate event_sourced.proto
 protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate action.proto
 protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate action.proto
+protoc --go-grpc_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate value_entity.proto
+protoc --go_out=paths=source_relative:cloudstate/entity --proto_path=protobuf/protocol/ --proto_path=protobuf/protocol/cloudstate value_entity.proto
 
 # TCK CRDT
 protoc --go-grpc_out=paths=source_relative:./tck/crdt \
@@ -75,30 +77,49 @@ protoc --go_out=paths=source_relative:./tck/action \
   --proto_path=protobuf/tck/cloudstate/tck/model \
   --proto_path=protobuf/tck tck_action.proto
 
+# TCK Value Entity
+protoc --go-grpc_out=paths=source_relative:./tck/value \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=protobuf/tck/cloudstate/tck/model \
+  --proto_path=protobuf/tck tck_valueentity.proto
+protoc --go_out=paths=source_relative:./tck/value \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=protobuf/tck/cloudstate/tck/model \
+  --proto_path=protobuf/tck tck_valueentity.proto
+
 # CRDT shopping cart example
-protoc --go-grpc_out=paths=source_relative:./example/crdt_shoppingcart/shoppingcart --proto_path=protobuf/protocol \
+protoc --go-grpc_out=paths=source_relative:./example/crdt_shoppingcart/shoppingcart \
+  --proto_path=protobuf/protocol \
   --proto_path=protobuf/frontend \
   --proto_path=protobuf/frontend/cloudstate \
   --proto_path=protobuf/proxy \
   --proto_path=example/crdt_shoppingcart/shoppingcart shoppingcart.proto hotitems.proto
-protoc --go_out=paths=source_relative:./example/crdt_shoppingcart/shoppingcart --proto_path=protobuf/protocol \
+protoc --go_out=paths=source_relative:./example/crdt_shoppingcart/shoppingcart \
+  --proto_path=protobuf/protocol \
   --proto_path=protobuf/frontend \
   --proto_path=protobuf/frontend/cloudstate \
   --proto_path=protobuf/proxy \
   --proto_path=example/crdt_shoppingcart/shoppingcart shoppingcart.proto hotitems.proto
-
-protoc --go-grpc_out=paths=source_relative:./example/crdt_shoppingcart/domain --proto_path=protobuf/protocol \
+protoc --go-grpc_out=paths=source_relative:./example/crdt_shoppingcart/domain \
+  --proto_path=protobuf/protocol \
   --proto_path=protobuf/frontend \
   --proto_path=protobuf/frontend/cloudstate \
   --proto_path=protobuf/proxy \
   --proto_path=example/crdt_shoppingcart/domain domain.proto
-protoc --go_out=paths=source_relative:./example/crdt_shoppingcart/domain --proto_path=protobuf/protocol \
+protoc --go_out=paths=source_relative:./example/crdt_shoppingcart/domain \
+  --proto_path=protobuf/protocol \
   --proto_path=protobuf/frontend \
   --proto_path=protobuf/frontend/cloudstate \
   --proto_path=protobuf/proxy \
   --proto_path=example/crdt_shoppingcart/domain domain.proto
 
-# shopping cart example
+# Event Sourced shopping cart example
 protoc --go-grpc_out=paths=source_relative:./example/shoppingcart/ \
   --proto_path=protobuf/protocol \
   --proto_path=protobuf/frontend \
@@ -123,6 +144,32 @@ protoc --go_out=paths=source_relative:./example/shoppingcart/persistence \
   --proto_path=protobuf/frontend/cloudstate \
   --proto_path=protobuf/proxy \
   --proto_path=example/shoppingcart/persistence domain.proto
+
+# Value Entity shopping cart example
+protoc --go-grpc_out=paths=source_relative:./example/valueentity/ \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=example/valueentity value_shoppingcart.proto
+protoc --go_out=paths=source_relative:./example/valueentity/ \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=example/valueentity value_shoppingcart.proto
+protoc --go-grpc_out=paths=source_relative:./example/valueentity/persistence \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=example/valueentity/persistence value_domain.proto
+protoc --go_out=paths=source_relative:./example/valueentity/persistence \
+  --proto_path=protobuf/protocol \
+  --proto_path=protobuf/frontend \
+  --proto_path=protobuf/frontend/cloudstate \
+  --proto_path=protobuf/proxy \
+  --proto_path=example/valueentity/persistence value_domain.proto
 
 # chat example
 protoc --go-grpc_out=paths=source_relative:./example/chat/presence/ \

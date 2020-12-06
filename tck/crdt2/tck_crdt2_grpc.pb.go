@@ -98,7 +98,7 @@ type UnsafeCrdtTckModelServer interface {
 	mustEmbedUnimplementedCrdtTckModelServer()
 }
 
-func RegisterCrdtTckModelServer(s *grpc.Server, srv CrdtTckModelServer) {
+func RegisterCrdtTckModelServer(s grpc.ServiceRegistrar, srv CrdtTckModelServer) {
 	s.RegisterService(&_CrdtTckModel_serviceDesc, srv)
 }
 
@@ -208,7 +208,7 @@ type UnsafeCrdtTwoServer interface {
 	mustEmbedUnimplementedCrdtTwoServer()
 }
 
-func RegisterCrdtTwoServer(s *grpc.Server, srv CrdtTwoServer) {
+func RegisterCrdtTwoServer(s grpc.ServiceRegistrar, srv CrdtTwoServer) {
 	s.RegisterService(&_CrdtTwo_serviceDesc, srv)
 }
 

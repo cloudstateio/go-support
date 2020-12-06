@@ -1,4 +1,3 @@
-//
 // Copyright 2019 Lightbend Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package protocol
+// These are the messages that get persisted - the current state (Cart).
+syntax = "proto3";
 
-const (
-	EventSourced = "cloudstate.eventsourced.EventSourced"
-	CRDT         = "cloudstate.crdt.Crdt"
-	Action       = "cloudstate.action.ActionProtocol"
-	Value        = "cloudstate.valueentity.ValueEntity"
-)
+package com.example.valueentity.shoppingcart.persistence;
+
+option go_package = "github.com/cloudstateio/go-support/example/valueentity/persistence;persistence";
+
+message LineItem {
+    string productId = 1;
+    string name = 2;
+    int32 quantity = 3;
+}
+
+// The shopping cart state.
+message Cart {
+    repeated LineItem items = 1;
+}

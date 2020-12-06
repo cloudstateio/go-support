@@ -89,7 +89,7 @@ type UnsafeFriendsServer interface {
 	mustEmbedUnimplementedFriendsServer()
 }
 
-func RegisterFriendsServer(s *grpc.Server, srv FriendsServer) {
+func RegisterFriendsServer(s grpc.ServiceRegistrar, srv FriendsServer) {
 	s.RegisterService(&_Friends_serviceDesc, srv)
 }
 

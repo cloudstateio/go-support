@@ -95,7 +95,7 @@ type UnsafeCrdtServer interface {
 	mustEmbedUnimplementedCrdtServer()
 }
 
-func RegisterCrdtServer(s *grpc.Server, srv CrdtServer) {
+func RegisterCrdtServer(s grpc.ServiceRegistrar, srv CrdtServer) {
 	s.RegisterService(&_Crdt_serviceDesc, srv)
 }
 

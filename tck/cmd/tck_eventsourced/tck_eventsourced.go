@@ -23,10 +23,13 @@ import (
 	"github.com/cloudstateio/go-support/cloudstate/crdt"
 	"github.com/cloudstateio/go-support/cloudstate/eventsourced"
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
+	"github.com/cloudstateio/go-support/cloudstate/value"
 	"github.com/cloudstateio/go-support/example/shoppingcart"
+	tck_value "github.com/cloudstateio/go-support/example/valueentity"
 	actionTCK "github.com/cloudstateio/go-support/tck/action"
 	"github.com/cloudstateio/go-support/tck/crdt2"
 	tck "github.com/cloudstateio/go-support/tck/eventsourced"
+	valueentity "github.com/cloudstateio/go-support/tck/value"
 )
 
 // tag::shopping-cart-main[]
@@ -38,7 +41,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("cloudstate.New failed: %s", err)
 	}
-
 	err = server.RegisterEventSourced(
 		&eventsourced.Entity{
 			ServiceName:   "cloudstate.tck.model.EventSourcedTckModel",
@@ -113,6 +115,38 @@ func main() {
 		EntityFunc:  crdt2.NewCrdtTwoEntity,
 	}, protocol.DescriptorConfig{
 		Service: "tck_crdt2.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+	err = server.RegisterValueEntity(&value.Entity{
+		ServiceName:   "cloudstate.tck.model.valueentity.ValueEntityTckModel",
+		EntityFunc:    valueentity.NewValueEntityTckModelEntity,
+		PersistenceID: "value-entity-tck-model",
+	}, protocol.DescriptorConfig{
+		Service: "tck_valueentity.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+	err = server.RegisterValueEntity(&value.Entity{
+		ServiceName:   "cloudstate.tck.model.valueentity.ValueEntityTwo",
+		EntityFunc:    valueentity.NewValueEntityTckModelEntityTwo,
+		PersistenceID: "value-entity-tck-model-two",
+	}, protocol.DescriptorConfig{
+		Service: "tck_valueentity.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+
+	// value entity ShoppingCart
+	err = server.RegisterValueEntity(&value.Entity{
+		ServiceName:   "com.example.valueentity.shoppingcart.ShoppingCart",
+		EntityFunc:    tck_value.NewShoppingCart,
+		PersistenceID: "shopping-cart",
+	}, protocol.DescriptorConfig{
+		Service: "value_shoppingcart.proto",
 	})
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %s", err)

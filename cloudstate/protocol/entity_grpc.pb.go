@@ -86,7 +86,7 @@ type UnsafeEntityDiscoveryServer interface {
 	mustEmbedUnimplementedEntityDiscoveryServer()
 }
 
-func RegisterEntityDiscoveryServer(s *grpc.Server, srv EntityDiscoveryServer) {
+func RegisterEntityDiscoveryServer(s grpc.ServiceRegistrar, srv EntityDiscoveryServer) {
 	s.RegisterService(&_EntityDiscovery_serviceDesc, srv)
 }
 
