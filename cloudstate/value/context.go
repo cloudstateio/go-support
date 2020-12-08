@@ -136,6 +136,9 @@ func (c *Context) entityReply(command *protocol.Command, reply *any.Any) *entity
 func (c *Context) runCommand(cmd *protocol.Command) (*any.Any, error) {
 	// unmarshal the commands message
 	msgName := strings.TrimPrefix(cmd.GetPayload().GetTypeUrl(), "type.googleapis.com/")
+	if strings.HasPrefix(msgName, "json.cloudstate.io/") {
+		return c.Instance.HandleCommand(c, cmd.Name, cmd.Payload)
+	}
 	messageType := proto.MessageType(msgName)
 	message, ok := reflect.New(messageType.Elem()).Interface().(proto.Message)
 	if !ok {
