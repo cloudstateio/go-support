@@ -102,6 +102,10 @@ func (c *Context) resetSnapshotEvery() {
 func (c *Context) marshalEventsAny() ([]*any.Any, error) {
 	events := make([]*any.Any, len(c.events))
 	for i, evt := range c.events {
+		if e, ok := evt.(*any.Any); ok {
+			events[i] = e
+			continue
+		}
 		event, err := encoding.MarshalAny(evt)
 		if err != nil {
 			return nil, err

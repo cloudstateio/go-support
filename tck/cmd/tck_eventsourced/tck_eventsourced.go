@@ -28,6 +28,7 @@ import (
 	tck_value "github.com/cloudstateio/go-support/example/valueentity"
 	actionTCK "github.com/cloudstateio/go-support/tck/action"
 	"github.com/cloudstateio/go-support/tck/crdt2"
+	"github.com/cloudstateio/go-support/tck/eventlogeventing"
 	tck "github.com/cloudstateio/go-support/tck/eventsourced"
 	valueentity "github.com/cloudstateio/go-support/tck/value"
 )
@@ -147,6 +148,43 @@ func main() {
 		PersistenceID: "shopping-cart",
 	}, protocol.DescriptorConfig{
 		Service: "value_shoppingcart.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+
+	// event log eventing
+	err = server.RegisterAction(&action.Entity{
+		ServiceName: "cloudstate.tck.model.eventlogeventing.EventLogSubscriberModel",
+		EntityFunc: func() action.EntityHandler {
+			return &eventlogeventing.EventLogSubscriberModel{}
+		},
+	}, protocol.DescriptorConfig{
+		Service: "eventlogeventing.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+	err = server.RegisterEventSourced(&eventsourced.Entity{
+		ServiceName:   "cloudstate.tck.model.eventlogeventing.EventSourcedEntityOne",
+		PersistenceID: "eventlogeventing-one",
+		EntityFunc: func(id eventsourced.EntityID) eventsourced.EntityHandler {
+			return &eventlogeventing.EventSourcedEntityOne{}
+		},
+	}, protocol.DescriptorConfig{
+		Service: "eventlogeventing.proto",
+	})
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+	err = server.RegisterEventSourced(&eventsourced.Entity{
+		ServiceName:   "cloudstate.tck.model.eventlogeventing.EventSourcedEntityTwo",
+		PersistenceID: "eventlogeventing-two",
+		EntityFunc: func(id eventsourced.EntityID) eventsourced.EntityHandler {
+			return &eventlogeventing.EventSourcedEntityTwo{}
+		},
+	}, protocol.DescriptorConfig{
+		Service: "eventlogeventing.proto",
 	})
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %s", err)

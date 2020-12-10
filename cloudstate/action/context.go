@@ -53,9 +53,9 @@ type Context struct {
 	cancelled bool
 }
 
-func (c *Context) RespondWith(reply *any.Any) {
+func (c *Context) RespondWith(response *any.Any) {
 	c.failure = nil
-	c.response = reply
+	c.response = response
 	c.forward = nil
 }
 

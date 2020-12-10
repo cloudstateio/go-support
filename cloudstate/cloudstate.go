@@ -82,7 +82,7 @@ func (cs *CloudState) RegisterCRDT(entity *crdt.Entity, config protocol.Descript
 	return nil
 }
 
-// RegisterCRDT registers a CRDT entity.
+// RegisterAction registers an action entity.
 func (cs *CloudState) RegisterAction(entity *action.Entity, config protocol.DescriptorConfig) error {
 	if err := cs.actionServer.Register(entity); err != nil {
 		return err

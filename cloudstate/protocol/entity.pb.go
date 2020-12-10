@@ -570,7 +570,7 @@ type Command struct {
 	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	// The command payload.
 	Payload *any.Any `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
-	// Whether the command is streamed or not
+	// Whether the command is streamed or not.
 	Streamed bool `protobuf:"varint,5,opt,name=streamed,proto3" json:"streamed,omitempty"`
 	// The command metadata.
 	//

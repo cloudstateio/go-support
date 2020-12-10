@@ -40,7 +40,7 @@ option go_package = "github.com/cloudstateio/go-support/tck/eventsourced;eventso
 // - Forwarding and side effects must always be made to the second service `EventSourcedTwo`.
 //
 service EventSourcedTckModel {
-    rpc Process (Request) returns (Response);
+    rpc Process(Request) returns (Response);
 }
 
 //
@@ -48,7 +48,7 @@ service EventSourcedTckModel {
 // The `Call` method is not required to do anything, and may simply return an empty `Response` message.
 //
 service EventSourcedTwo {
-    rpc Call (Request) returns (Response);
+    rpc Call(Request) returns (Response);
 }
 
 //
