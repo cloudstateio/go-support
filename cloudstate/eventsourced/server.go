@@ -142,6 +142,7 @@ func (s *Server) handle(stream entity.EventSourced_HandleServer) error {
 		switch m := msg.GetMessage().(type) {
 		case *entity.EventSourcedStreamIn_Command:
 			err := r.handleCommand(m.Command)
+			r.context.reset()
 			if err == nil {
 				continue
 			}

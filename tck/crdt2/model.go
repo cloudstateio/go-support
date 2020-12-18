@@ -396,11 +396,20 @@ func (e *CrdtTckModelEntity) Set(ctx *crdt.Context, state crdt.CRDT) error {
 type CrdtTwoEntity struct{}
 
 func (CrdtTwoEntity) HandleCommand(ctx *crdt.CommandContext, name string, msg proto.Message) (*any.Any, error) {
+	r, ok := msg.(*Request)
+	if !ok {
+		return nil, nil
+	}
+	for _, action := range r.GetActions() {
+		if action.GetDelete() != nil {
+			ctx.Delete()
+		}
+	}
 	return encoding.MarshalAny(&Response{})
 }
 
 func (CrdtTwoEntity) Default(ctx *crdt.Context) (crdt.CRDT, error) {
-	return nil, nil
+	return createCRDT(ctx.EntityID)
 }
 
 func (CrdtTwoEntity) Set(ctx *crdt.Context, state crdt.CRDT) error {

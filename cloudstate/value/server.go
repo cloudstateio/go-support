@@ -101,9 +101,7 @@ func (s *Server) Handle(stream entity.ValueEntity_HandleServer) error {
 			if err != nil {
 				return err
 			}
-			c.update = false
-			c.delete = false
-			c.failure = nil
+			c.reset()
 		case *entity.ValueEntityStreamIn_Init:
 			if EntityID(m.Init.EntityId) == c.EntityID {
 				return errors.New("duplicate init message for the same entity")

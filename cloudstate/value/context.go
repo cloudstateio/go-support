@@ -165,3 +165,11 @@ func (c *Context) Update(state *any.Any, err error) error {
 	c.state = state
 	return nil
 }
+
+func (c *Context) reset() {
+	c.update = false
+	c.delete = false
+	c.forward = nil
+	c.failure = nil
+	c.sideEffects = nil
+}
