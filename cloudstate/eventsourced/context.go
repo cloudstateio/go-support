@@ -98,6 +98,12 @@ func (c *Context) resetSnapshotEvery() {
 	c.shouldSnapshot = false
 }
 
+func (c *Context) reset() {
+	c.failed = nil
+	c.forward = nil
+	c.sideEffects = nil
+}
+
 // marshalEventsAny marshals and the clears events emitted through the context.
 func (c *Context) marshalEventsAny() ([]*any.Any, error) {
 	events := make([]*any.Any, len(c.events))

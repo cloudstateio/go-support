@@ -105,5 +105,10 @@ func NewTestModelTwo() action.EntityHandler {
 }
 
 func (m *TestModelTwo) HandleCommand(ctx *action.Context, name string, msg proto.Message) error {
+	resp, err := encoding.MarshalAny(&Response{})
+	if err != nil {
+		return err
+	}
+	ctx.RespondWith(resp)
 	return nil
 }
