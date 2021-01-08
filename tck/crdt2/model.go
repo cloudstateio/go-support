@@ -415,3 +415,22 @@ func (CrdtTwoEntity) Default(ctx *crdt.Context) (crdt.CRDT, error) {
 func (CrdtTwoEntity) Set(ctx *crdt.Context, state crdt.CRDT) error {
 	return nil
 }
+
+type CrdtConfiguredEntity struct {
+}
+
+func NewCrdtConfiguredEntity(id crdt.EntityID) crdt.EntityHandler {
+	return &CrdtConfiguredEntity{}
+}
+
+func (CrdtConfiguredEntity) HandleCommand(ctx *crdt.CommandContext, name string, msg proto.Message) (*any.Any, error) {
+	return encoding.MarshalAny(&Response{})
+}
+
+func (CrdtConfiguredEntity) Default(ctx *crdt.Context) (crdt.CRDT, error) {
+	return crdt.NewFlag(), nil
+}
+
+func (CrdtConfiguredEntity) Set(ctx *crdt.Context, state crdt.CRDT) error {
+	return nil
+}

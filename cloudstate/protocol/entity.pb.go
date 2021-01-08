@@ -969,6 +969,8 @@ type Entity struct {
 	// The ID to namespace state by. How this is used depends on the type of entity, for example,
 	// event sourced entities will prefix this to the persistence id.
 	PersistenceId string `protobuf:"bytes,3,opt,name=persistence_id,json=persistenceId,proto3" json:"persistence_id,omitempty"`
+	// The passivation strategy for the entity.
+	PassivationStrategy *EntityPassivationStrategy `protobuf:"bytes,4,opt,name=passivation_strategy,json=passivationStrategy,proto3" json:"passivation_strategy,omitempty"`
 }
 
 func (x *Entity) Reset() {
@@ -1024,6 +1026,136 @@ func (x *Entity) GetPersistenceId() string {
 	return ""
 }
 
+func (x *Entity) GetPassivationStrategy() *EntityPassivationStrategy {
+	if x != nil {
+		return x.PassivationStrategy
+	}
+	return nil
+}
+
+//
+// The semantics is to provide a flexible way for entity user functions to configure the passivation strategy.
+// This strategy is sent to the proxy at discovery time allowing the proxy to configure the corresponding entities.
+// The only passivation strategy supported is the timeout strategy and configuring this is optional for the entity.
+// If an entity user function does not configure the passivation strategy the proxy uses its fallback default value.
+//
+// The passivation strategy for the entity user function.
+type EntityPassivationStrategy struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Strategy:
+	//	*EntityPassivationStrategy_Timeout
+	Strategy isEntityPassivationStrategy_Strategy `protobuf_oneof:"strategy"`
+}
+
+func (x *EntityPassivationStrategy) Reset() {
+	*x = EntityPassivationStrategy{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_entity_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EntityPassivationStrategy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntityPassivationStrategy) ProtoMessage() {}
+
+func (x *EntityPassivationStrategy) ProtoReflect() protoreflect.Message {
+	mi := &file_entity_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntityPassivationStrategy.ProtoReflect.Descriptor instead.
+func (*EntityPassivationStrategy) Descriptor() ([]byte, []int) {
+	return file_entity_proto_rawDescGZIP(), []int{12}
+}
+
+func (m *EntityPassivationStrategy) GetStrategy() isEntityPassivationStrategy_Strategy {
+	if m != nil {
+		return m.Strategy
+	}
+	return nil
+}
+
+func (x *EntityPassivationStrategy) GetTimeout() *TimeoutPassivationStrategy {
+	if x, ok := x.GetStrategy().(*EntityPassivationStrategy_Timeout); ok {
+		return x.Timeout
+	}
+	return nil
+}
+
+type isEntityPassivationStrategy_Strategy interface {
+	isEntityPassivationStrategy_Strategy()
+}
+
+type EntityPassivationStrategy_Timeout struct {
+	// the timeout passivation strategy.
+	Timeout *TimeoutPassivationStrategy `protobuf:"bytes,1,opt,name=timeout,proto3,oneof"`
+}
+
+func (*EntityPassivationStrategy_Timeout) isEntityPassivationStrategy_Strategy() {}
+
+// A passivation strategy based on a timeout. The idle timeout after which a user function's entity is passivated.
+type TimeoutPassivationStrategy struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The timeout in millis
+	Timeout int64 `protobuf:"varint,1,opt,name=timeout,proto3" json:"timeout,omitempty"`
+}
+
+func (x *TimeoutPassivationStrategy) Reset() {
+	*x = TimeoutPassivationStrategy{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_entity_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TimeoutPassivationStrategy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TimeoutPassivationStrategy) ProtoMessage() {}
+
+func (x *TimeoutPassivationStrategy) ProtoReflect() protoreflect.Message {
+	mi := &file_entity_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TimeoutPassivationStrategy.ProtoReflect.Descriptor instead.
+func (*TimeoutPassivationStrategy) Descriptor() ([]byte, []int) {
+	return file_entity_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *TimeoutPassivationStrategy) GetTimeout() int64 {
+	if x != nil {
+		return x.Timeout
+	}
+	return 0
+}
+
 type UserFunctionError struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1035,7 +1167,7 @@ type UserFunctionError struct {
 func (x *UserFunctionError) Reset() {
 	*x = UserFunctionError{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[12]
+		mi := &file_entity_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1048,7 +1180,7 @@ func (x *UserFunctionError) String() string {
 func (*UserFunctionError) ProtoMessage() {}
 
 func (x *UserFunctionError) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[12]
+	mi := &file_entity_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1061,7 +1193,7 @@ func (x *UserFunctionError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserFunctionError.ProtoReflect.Descriptor instead.
 func (*UserFunctionError) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{12}
+	return file_entity_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *UserFunctionError) GetMessage() string {
@@ -1086,7 +1218,7 @@ type ProxyInfo struct {
 func (x *ProxyInfo) Reset() {
 	*x = ProxyInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[13]
+		mi := &file_entity_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1099,7 +1231,7 @@ func (x *ProxyInfo) String() string {
 func (*ProxyInfo) ProtoMessage() {}
 
 func (x *ProxyInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[13]
+	mi := &file_entity_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1112,7 +1244,7 @@ func (x *ProxyInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProxyInfo.ProtoReflect.Descriptor instead.
 func (*ProxyInfo) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{13}
+	return file_entity_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ProxyInfo) GetProtocolMajorVersion() int32 {
@@ -1267,14 +1399,30 @@ var file_entity_proto_rawDesc = []byte{
 	0x12, 0x34, 0x0a, 0x16, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x5f, 0x6d, 0x69, 0x6e,
 	0x6f, 0x72, 0x5f, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x07, 0x20, 0x01, 0x28, 0x05,
 	0x52, 0x14, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x4d, 0x69, 0x6e, 0x6f, 0x72, 0x56,
-	0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x73, 0x0a, 0x06, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79,
-	0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70,
-	0x65, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x6e, 0x61, 0x6d,
-	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
-	0x4e, 0x61, 0x6d, 0x65, 0x12, 0x25, 0x0a, 0x0e, 0x70, 0x65, 0x72, 0x73, 0x69, 0x73, 0x74, 0x65,
-	0x6e, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x70, 0x65,
-	0x72, 0x73, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x63, 0x65, 0x49, 0x64, 0x22, 0x2d, 0x0a, 0x11, 0x55,
+	0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0xcd, 0x01, 0x0a, 0x06, 0x45, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x54, 0x79,
+	0x70, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x25, 0x0a, 0x0e, 0x70, 0x65, 0x72, 0x73, 0x69, 0x73, 0x74,
+	0x65, 0x6e, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x70,
+	0x65, 0x72, 0x73, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x63, 0x65, 0x49, 0x64, 0x12, 0x58, 0x0a, 0x14,
+	0x70, 0x61, 0x73, 0x73, 0x69, 0x76, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x74, 0x72, 0x61,
+	0x74, 0x65, 0x67, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63, 0x6c, 0x6f,
+	0x75, 0x64, 0x73, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x50, 0x61,
+	0x73, 0x73, 0x69, 0x76, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67,
+	0x79, 0x52, 0x13, 0x70, 0x61, 0x73, 0x73, 0x69, 0x76, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74,
+	0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x22, 0x6b, 0x0a, 0x19, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79,
+	0x50, 0x61, 0x73, 0x73, 0x69, 0x76, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x72, 0x61, 0x74,
+	0x65, 0x67, 0x79, 0x12, 0x42, 0x0a, 0x07, 0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x73, 0x74, 0x61, 0x74,
+	0x65, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x50, 0x61, 0x73, 0x73, 0x69, 0x76, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x48, 0x00, 0x52, 0x07,
+	0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x42, 0x0a, 0x0a, 0x08, 0x73, 0x74, 0x72, 0x61, 0x74,
+	0x65, 0x67, 0x79, 0x22, 0x36, 0x0a, 0x1a, 0x54, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x50, 0x61,
+	0x73, 0x73, 0x69, 0x76, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67,
+	0x79, 0x12, 0x18, 0x0a, 0x07, 0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x03, 0x52, 0x07, 0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x22, 0x2d, 0x0a, 0x11, 0x55,
 	0x73, 0x65, 0x72, 0x46, 0x75, 0x6e, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72,
 	0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0xf1, 0x01, 0x0a, 0x09, 0x50,
@@ -1323,49 +1471,53 @@ func file_entity_proto_rawDescGZIP() []byte {
 	return file_entity_proto_rawDescData
 }
 
-var file_entity_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_entity_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_entity_proto_goTypes = []interface{}{
-	(*Metadata)(nil),          // 0: cloudstate.Metadata
-	(*MetadataEntry)(nil),     // 1: cloudstate.MetadataEntry
-	(*Reply)(nil),             // 2: cloudstate.Reply
-	(*Forward)(nil),           // 3: cloudstate.Forward
-	(*ClientAction)(nil),      // 4: cloudstate.ClientAction
-	(*SideEffect)(nil),        // 5: cloudstate.SideEffect
-	(*Command)(nil),           // 6: cloudstate.Command
-	(*StreamCancelled)(nil),   // 7: cloudstate.StreamCancelled
-	(*Failure)(nil),           // 8: cloudstate.Failure
-	(*EntitySpec)(nil),        // 9: cloudstate.EntitySpec
-	(*ServiceInfo)(nil),       // 10: cloudstate.ServiceInfo
-	(*Entity)(nil),            // 11: cloudstate.Entity
-	(*UserFunctionError)(nil), // 12: cloudstate.UserFunctionError
-	(*ProxyInfo)(nil),         // 13: cloudstate.ProxyInfo
-	(*any.Any)(nil),           // 14: google.protobuf.Any
-	(*empty.Empty)(nil),       // 15: google.protobuf.Empty
+	(*Metadata)(nil),                   // 0: cloudstate.Metadata
+	(*MetadataEntry)(nil),              // 1: cloudstate.MetadataEntry
+	(*Reply)(nil),                      // 2: cloudstate.Reply
+	(*Forward)(nil),                    // 3: cloudstate.Forward
+	(*ClientAction)(nil),               // 4: cloudstate.ClientAction
+	(*SideEffect)(nil),                 // 5: cloudstate.SideEffect
+	(*Command)(nil),                    // 6: cloudstate.Command
+	(*StreamCancelled)(nil),            // 7: cloudstate.StreamCancelled
+	(*Failure)(nil),                    // 8: cloudstate.Failure
+	(*EntitySpec)(nil),                 // 9: cloudstate.EntitySpec
+	(*ServiceInfo)(nil),                // 10: cloudstate.ServiceInfo
+	(*Entity)(nil),                     // 11: cloudstate.Entity
+	(*EntityPassivationStrategy)(nil),  // 12: cloudstate.EntityPassivationStrategy
+	(*TimeoutPassivationStrategy)(nil), // 13: cloudstate.TimeoutPassivationStrategy
+	(*UserFunctionError)(nil),          // 14: cloudstate.UserFunctionError
+	(*ProxyInfo)(nil),                  // 15: cloudstate.ProxyInfo
+	(*any.Any)(nil),                    // 16: google.protobuf.Any
+	(*empty.Empty)(nil),                // 17: google.protobuf.Empty
 }
 var file_entity_proto_depIdxs = []int32{
 	1,  // 0: cloudstate.Metadata.entries:type_name -> cloudstate.MetadataEntry
-	14, // 1: cloudstate.Reply.payload:type_name -> google.protobuf.Any
+	16, // 1: cloudstate.Reply.payload:type_name -> google.protobuf.Any
 	0,  // 2: cloudstate.Reply.metadata:type_name -> cloudstate.Metadata
-	14, // 3: cloudstate.Forward.payload:type_name -> google.protobuf.Any
+	16, // 3: cloudstate.Forward.payload:type_name -> google.protobuf.Any
 	0,  // 4: cloudstate.Forward.metadata:type_name -> cloudstate.Metadata
 	2,  // 5: cloudstate.ClientAction.reply:type_name -> cloudstate.Reply
 	3,  // 6: cloudstate.ClientAction.forward:type_name -> cloudstate.Forward
 	8,  // 7: cloudstate.ClientAction.failure:type_name -> cloudstate.Failure
-	14, // 8: cloudstate.SideEffect.payload:type_name -> google.protobuf.Any
+	16, // 8: cloudstate.SideEffect.payload:type_name -> google.protobuf.Any
 	0,  // 9: cloudstate.SideEffect.metadata:type_name -> cloudstate.Metadata
-	14, // 10: cloudstate.Command.payload:type_name -> google.protobuf.Any
+	16, // 10: cloudstate.Command.payload:type_name -> google.protobuf.Any
 	0,  // 11: cloudstate.Command.metadata:type_name -> cloudstate.Metadata
 	11, // 12: cloudstate.EntitySpec.entities:type_name -> cloudstate.Entity
 	10, // 13: cloudstate.EntitySpec.service_info:type_name -> cloudstate.ServiceInfo
-	13, // 14: cloudstate.EntityDiscovery.discover:input_type -> cloudstate.ProxyInfo
-	12, // 15: cloudstate.EntityDiscovery.reportError:input_type -> cloudstate.UserFunctionError
-	9,  // 16: cloudstate.EntityDiscovery.discover:output_type -> cloudstate.EntitySpec
-	15, // 17: cloudstate.EntityDiscovery.reportError:output_type -> google.protobuf.Empty
-	16, // [16:18] is the sub-list for method output_type
-	14, // [14:16] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	12, // 14: cloudstate.Entity.passivation_strategy:type_name -> cloudstate.EntityPassivationStrategy
+	13, // 15: cloudstate.EntityPassivationStrategy.timeout:type_name -> cloudstate.TimeoutPassivationStrategy
+	15, // 16: cloudstate.EntityDiscovery.discover:input_type -> cloudstate.ProxyInfo
+	14, // 17: cloudstate.EntityDiscovery.reportError:input_type -> cloudstate.UserFunctionError
+	9,  // 18: cloudstate.EntityDiscovery.discover:output_type -> cloudstate.EntitySpec
+	17, // 19: cloudstate.EntityDiscovery.reportError:output_type -> google.protobuf.Empty
+	18, // [18:20] is the sub-list for method output_type
+	16, // [16:18] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_entity_proto_init() }
@@ -1519,7 +1671,7 @@ func file_entity_proto_init() {
 			}
 		}
 		file_entity_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UserFunctionError); i {
+			switch v := v.(*EntityPassivationStrategy); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1531,6 +1683,30 @@ func file_entity_proto_init() {
 			}
 		}
 		file_entity_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TimeoutPassivationStrategy); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_entity_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UserFunctionError); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_entity_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ProxyInfo); i {
 			case 0:
 				return &v.state
@@ -1552,13 +1728,16 @@ func file_entity_proto_init() {
 		(*ClientAction_Forward)(nil),
 		(*ClientAction_Failure)(nil),
 	}
+	file_entity_proto_msgTypes[12].OneofWrappers = []interface{}{
+		(*EntityPassivationStrategy_Timeout)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_entity_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

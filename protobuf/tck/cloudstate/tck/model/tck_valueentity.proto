@@ -41,9 +41,9 @@ option go_package = "github.com/cloudstateio/go-support/tck/valueentity;valueent
 service ValueEntityTckModel {
     rpc Process(Request) returns (Response) {
         option (google.api.http) = {
-            post: "/tck/model/entity/{id}",
-            body: "*"
-        };
+      post: "/tck/model/entity/{id}"
+      body: "*"
+    };
     }
 }
 
@@ -64,9 +64,9 @@ service ValueEntityTwo {
 // - The passivation strategy must be set with a timeout of 100 millis.
 // - The `Call` method is not required to do anything, and must return an empty `Response` message.
 //
-// service ValueEntityConfigured {
-//     rpc Call(Request) returns (Response);
-// }
+service ValueEntityConfigured {
+    rpc Call(Request) returns (Response);
+}
 
 //
 // A `Request` message contains any actions that the entity should process.

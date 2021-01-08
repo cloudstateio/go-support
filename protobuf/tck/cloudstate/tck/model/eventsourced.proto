@@ -43,9 +43,9 @@ option go_package = "github.com/cloudstateio/go-support/tck/eventsourced;eventso
 service EventSourcedTckModel {
     rpc Process(Request) returns (Response) {
         option (google.api.http) = {
-            post: "/tck/model/eventsourced/{id}",
-            body: "*"
-        };
+      post: "/tck/model/eventsourced/{id}",
+      body: "*"
+    };
     }
 }
 
@@ -64,9 +64,9 @@ service EventSourcedTwo {
 // - The passivation strategy must be set with a timeout of 100 millis.
 // - The `Call` method is not required to do anything, and must return an empty `Response` message.
 //
-// service EventSourcedConfigured {
-//     rpc Call(Request) returns (Response);
-// }
+service EventSourcedConfigured {
+    rpc Call(Request) returns (Response);
+}
 
 //
 // A `Request` message contains any actions that the entity should process.

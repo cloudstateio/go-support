@@ -109,7 +109,6 @@ func (sc *ShoppingCart) HandleCommand(ctx *value.Context, name string, cmd proto
 }
 
 func (sc *ShoppingCart) HandleState(ctx *value.Context, state *any.Any) error {
-
 	return nil
 }
 

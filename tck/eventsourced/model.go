@@ -109,3 +109,18 @@ func (m *TestModelTwo) HandleEvent(ctx *eventsourced.Context, event interface{})
 func NewTestModelTwo(id eventsourced.EntityID) eventsourced.EntityHandler {
 	return &TestModelTwo{}
 }
+
+type EventSourcedConfiguredEntity struct {
+}
+
+func NewEventSourcedConfiguredEntity(id eventsourced.EntityID) eventsourced.EntityHandler {
+	return &EventSourcedConfiguredEntity{}
+}
+
+func (e *EventSourcedConfiguredEntity) HandleCommand(ctx *eventsourced.Context, name string, cmd proto.Message) (reply proto.Message, err error) {
+	return &Response{}, err
+}
+
+func (e *EventSourcedConfiguredEntity) HandleEvent(ctx *eventsourced.Context, event interface{}) error {
+	return nil
+}

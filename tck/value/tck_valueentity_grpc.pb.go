@@ -178,3 +178,86 @@ var _ValueEntityTwo_serviceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "tck_valueentity.proto",
 }
+
+// ValueEntityConfiguredClient is the client API for ValueEntityConfigured service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ValueEntityConfiguredClient interface {
+	Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+}
+
+type valueEntityConfiguredClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewValueEntityConfiguredClient(cc grpc.ClientConnInterface) ValueEntityConfiguredClient {
+	return &valueEntityConfiguredClient{cc}
+}
+
+func (c *valueEntityConfiguredClient) Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/cloudstate.tck.model.valueentity.ValueEntityConfigured/Call", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ValueEntityConfiguredServer is the server API for ValueEntityConfigured service.
+// All implementations must embed UnimplementedValueEntityConfiguredServer
+// for forward compatibility
+type ValueEntityConfiguredServer interface {
+	Call(context.Context, *Request) (*Response, error)
+	mustEmbedUnimplementedValueEntityConfiguredServer()
+}
+
+// UnimplementedValueEntityConfiguredServer must be embedded to have forward compatible implementations.
+type UnimplementedValueEntityConfiguredServer struct {
+}
+
+func (UnimplementedValueEntityConfiguredServer) Call(context.Context, *Request) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Call not implemented")
+}
+func (UnimplementedValueEntityConfiguredServer) mustEmbedUnimplementedValueEntityConfiguredServer() {}
+
+// UnsafeValueEntityConfiguredServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ValueEntityConfiguredServer will
+// result in compilation errors.
+type UnsafeValueEntityConfiguredServer interface {
+	mustEmbedUnimplementedValueEntityConfiguredServer()
+}
+
+func RegisterValueEntityConfiguredServer(s grpc.ServiceRegistrar, srv ValueEntityConfiguredServer) {
+	s.RegisterService(&_ValueEntityConfigured_serviceDesc, srv)
+}
+
+func _ValueEntityConfigured_Call_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ValueEntityConfiguredServer).Call(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cloudstate.tck.model.valueentity.ValueEntityConfigured/Call",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ValueEntityConfiguredServer).Call(ctx, req.(*Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _ValueEntityConfigured_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "cloudstate.tck.model.valueentity.ValueEntityConfigured",
+	HandlerType: (*ValueEntityConfiguredServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Call",
+			Handler:    _ValueEntityConfigured_Call_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "tck_valueentity.proto",
+}

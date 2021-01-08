@@ -17,6 +17,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/cloudstateio/go-support/cloudstate"
 	"github.com/cloudstateio/go-support/cloudstate/action"
@@ -25,7 +26,6 @@ import (
 	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/cloudstateio/go-support/cloudstate/value"
 	"github.com/cloudstateio/go-support/example/shoppingcart"
-	tck_value "github.com/cloudstateio/go-support/example/valueentity"
 	actionTCK "github.com/cloudstateio/go-support/tck/action"
 	"github.com/cloudstateio/go-support/tck/crdt2"
 	"github.com/cloudstateio/go-support/tck/eventlogeventing"
@@ -68,6 +68,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("Cloudstate failed to register entity: %s", err)
 	}
+	err = server.RegisterEventSourced(
+		&eventsourced.Entity{
+			ServiceName:   "cloudstate.tck.model.EventSourcedConfigured",
+			PersistenceID: "event-sourced-configured",
+			SnapshotEvery: 5,
+			EntityFunc:    tck.NewEventSourcedConfiguredEntity,
+		}, protocol.DescriptorConfig{
+			Service: "eventsourced.proto",
+		},
+		eventsourced.WithPassivationStrategyTimeout(100*time.Millisecond),
+	)
+	if err != nil {
+		log.Fatalf("Cloudstate failed to register entity: %s", err)
+	}
+
 	// tag::event-sourced-entity-type[]
 	// tag::register[]
 	err = server.RegisterEventSourced(&eventsourced.Entity{
@@ -120,6 +135,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}
+	err = server.RegisterCRDT(&crdt.Entity{
+		ServiceName: "cloudstate.tck.model.crdt.CrdtConfigured",
+		EntityFunc:  crdt2.NewCrdtConfiguredEntity,
+	}, protocol.DescriptorConfig{
+		Service: "tck_crdt2.proto",
+	}, crdt.WithPassivationStrategyTimeout(100*time.Millisecond))
+	if err != nil {
+		log.Fatalf("CloudState failed to register entity: %s", err)
+	}
+
 	err = server.RegisterValueEntity(&value.Entity{
 		ServiceName:   "cloudstate.tck.model.valueentity.ValueEntityTckModel",
 		EntityFunc:    valueentity.NewValueEntityTckModelEntity,
@@ -140,15 +165,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}
-
-	// value entity ShoppingCart
-	err = server.RegisterValueEntity(&value.Entity{
-		ServiceName:   "com.example.valueentity.shoppingcart.ShoppingCart",
-		EntityFunc:    tck_value.NewShoppingCart,
-		PersistenceID: "shopping-cart",
-	}, protocol.DescriptorConfig{
-		Service: "value_shoppingcart.proto",
-	})
+	err = server.RegisterValueEntity(
+		&value.Entity{
+			ServiceName:   "cloudstate.tck.model.valueentity.ValueEntityConfigured",
+			EntityFunc:    valueentity.NewValueEntityConfiguredEntity,
+			PersistenceID: "value-entity-configured",
+		}, protocol.DescriptorConfig{
+			Service: "tck_valueentity.proto",
+		}, value.WithPassivationStrategyTimeout(100*time.Millisecond),
+	)
 	if err != nil {
 		log.Fatalf("CloudState failed to register entity: %s", err)
 	}

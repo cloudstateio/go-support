@@ -16,6 +16,9 @@
 package crdt
 
 import (
+	"time"
+
+	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 )
@@ -27,7 +30,28 @@ type Entity struct {
 	// this entities interface. Setting it is mandatory.
 	ServiceName ServiceName
 	// EntityFunc creates a new entity.
-	EntityFunc func(id EntityID) EntityHandler
+	EntityFunc          func(id EntityID) EntityHandler
+	PassivationStrategy protocol.EntityPassivationStrategy
+}
+
+type Option func(s *Entity)
+
+func (e *Entity) Options(options ...Option) {
+	for _, opt := range options {
+		opt(e)
+	}
+}
+
+func WithPassivationStrategyTimeout(duration time.Duration) Option {
+	return func(e *Entity) {
+		e.PassivationStrategy = protocol.EntityPassivationStrategy{
+			Strategy: &protocol.EntityPassivationStrategy_Timeout{
+				Timeout: &protocol.TimeoutPassivationStrategy{
+					Timeout: duration.Milliseconds(),
+				},
+			},
+		}
+	}
 }
 
 // EntityHandler has to be implemented by any type that wants to get

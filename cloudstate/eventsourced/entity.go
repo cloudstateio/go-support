@@ -16,6 +16,9 @@
 package eventsourced
 
 import (
+	"time"
+
+	"github.com/cloudstateio/go-support/cloudstate/protocol"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -40,6 +43,28 @@ type Entity struct {
 	SnapshotEvery int64
 	// EntityFunc is a factory method which generates a new Entity.
 	EntityFunc func(id EntityID) EntityHandler
+
+	PassivationStrategy protocol.EntityPassivationStrategy
+}
+
+type Option func(s *Entity)
+
+func (e *Entity) Options(options ...Option) {
+	for _, opt := range options {
+		opt(e)
+	}
+}
+
+func WithPassivationStrategyTimeout(duration time.Duration) Option {
+	return func(e *Entity) {
+		e.PassivationStrategy = protocol.EntityPassivationStrategy{
+			Strategy: &protocol.EntityPassivationStrategy_Timeout{
+				Timeout: &protocol.TimeoutPassivationStrategy{
+					Timeout: duration.Milliseconds(),
+				},
+			},
+		}
+	}
 }
 
 type (
