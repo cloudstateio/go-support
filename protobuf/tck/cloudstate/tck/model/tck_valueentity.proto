@@ -41,7 +41,7 @@ option go_package = "github.com/cloudstateio/go-support/tck/valueentity;valueent
 service ValueEntityTckModel {
     rpc Process(Request) returns (Response) {
         option (google.api.http) = {
-      post: "/tck/model/entity/{id}"
+      post: "/tck/model/entity/{id}",
       body: "*"
     };
     }
