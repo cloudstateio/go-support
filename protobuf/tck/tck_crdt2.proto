@@ -45,9 +45,9 @@ option go_package = "github.com/cloudstateio/go-support/tck/crdt2;crdt2";
 service CrdtTckModel {
     rpc Process(Request) returns (Response) {
         option (google.api.http) = {
-      post: "/tck/model/crdt/{id}"
-      body: "*"
-    };
+            post: "/tck/model/crdt/{id}",
+            body: "*"
+        };
     }
     rpc ProcessStreamed(StreamedRequest) returns (stream Response);
 }

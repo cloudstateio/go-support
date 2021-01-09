@@ -43,9 +43,9 @@ option go_package = "github.com/cloudstateio/go-support/tck/eventsourced;eventso
 service EventSourcedTckModel {
     rpc Process(Request) returns (Response) {
         option (google.api.http) = {
-      post: "/tck/model/eventsourced/{id}",
-      body: "*"
-    };
+            post: "/tck/model/eventsourced/{id}",
+            body: "*"
+        };
     }
 }
 
