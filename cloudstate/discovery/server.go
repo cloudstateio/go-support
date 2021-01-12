@@ -138,8 +138,9 @@ func (s *EntityDiscoveryServer) RegisterCRDTEntity(entity *crdt.Entity, config p
 		return fmt.Errorf("failed to resolveFileDescriptor for DescriptorConfig: %+v: %w", config, err)
 	}
 	s.entitySpec.Entities = append(s.entitySpec.Entities, &protocol.Entity{
-		EntityType:  protocol.CRDT,
-		ServiceName: entity.ServiceName.String(),
+		EntityType:    protocol.CRDT,
+		ServiceName:   entity.ServiceName.String(),
+		PersistenceId: entity.ServiceName.String(), // make sure CRDT entities have unique keys per service
 	})
 	return s.updateSpec()
 }
