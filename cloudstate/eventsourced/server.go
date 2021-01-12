@@ -128,6 +128,7 @@ func (s *Server) handle(stream entity.EventSourced_HandleServer) error {
 			// see: https://github.com/cloudstateio/cloudstate/pull/119#discussion_r444851439
 			return fmt.Errorf("failed context was not reported: %w", r.context.failed)
 		}
+		r.context.reset()
 		msg, err := r.stream.Recv()
 		switch err {
 		case nil:

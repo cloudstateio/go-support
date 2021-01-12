@@ -94,6 +94,13 @@ func (c *Context) fail(err error) {
 	c.failed = err
 }
 
+func (c *Context) reset() {
+	c.events = nil
+	c.failed = nil
+	c.forward = nil
+	c.sideEffects = nil
+}
+
 func (c *Context) resetSnapshotEvery() {
 	c.shouldSnapshot = false
 }
