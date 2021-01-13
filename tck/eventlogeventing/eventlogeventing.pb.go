@@ -304,7 +304,6 @@ func (x *JsonEvent) GetMessage() string {
 //
 // - Reply: reply with the given message in a `Response`.
 // - Forward: forward to another service, in place of replying with a `Response`.
-// - SideEffect: add a side effect to the current reply, forward, or failure.
 //
 type ProcessStep struct {
 	state         protoimpl.MessageState

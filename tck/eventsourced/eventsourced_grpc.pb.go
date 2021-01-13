@@ -178,3 +178,87 @@ var _EventSourcedTwo_serviceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "eventsourced.proto",
 }
+
+// EventSourcedConfiguredClient is the client API for EventSourcedConfigured service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type EventSourcedConfiguredClient interface {
+	Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+}
+
+type eventSourcedConfiguredClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewEventSourcedConfiguredClient(cc grpc.ClientConnInterface) EventSourcedConfiguredClient {
+	return &eventSourcedConfiguredClient{cc}
+}
+
+func (c *eventSourcedConfiguredClient) Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/cloudstate.tck.model.EventSourcedConfigured/Call", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// EventSourcedConfiguredServer is the server API for EventSourcedConfigured service.
+// All implementations must embed UnimplementedEventSourcedConfiguredServer
+// for forward compatibility
+type EventSourcedConfiguredServer interface {
+	Call(context.Context, *Request) (*Response, error)
+	mustEmbedUnimplementedEventSourcedConfiguredServer()
+}
+
+// UnimplementedEventSourcedConfiguredServer must be embedded to have forward compatible implementations.
+type UnimplementedEventSourcedConfiguredServer struct {
+}
+
+func (UnimplementedEventSourcedConfiguredServer) Call(context.Context, *Request) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Call not implemented")
+}
+func (UnimplementedEventSourcedConfiguredServer) mustEmbedUnimplementedEventSourcedConfiguredServer() {
+}
+
+// UnsafeEventSourcedConfiguredServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to EventSourcedConfiguredServer will
+// result in compilation errors.
+type UnsafeEventSourcedConfiguredServer interface {
+	mustEmbedUnimplementedEventSourcedConfiguredServer()
+}
+
+func RegisterEventSourcedConfiguredServer(s grpc.ServiceRegistrar, srv EventSourcedConfiguredServer) {
+	s.RegisterService(&_EventSourcedConfigured_serviceDesc, srv)
+}
+
+func _EventSourcedConfigured_Call_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EventSourcedConfiguredServer).Call(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cloudstate.tck.model.EventSourcedConfigured/Call",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EventSourcedConfiguredServer).Call(ctx, req.(*Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _EventSourcedConfigured_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "cloudstate.tck.model.EventSourcedConfigured",
+	HandlerType: (*EventSourcedConfiguredServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Call",
+			Handler:    _EventSourcedConfigured_Call_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "eventsourced.proto",
+}

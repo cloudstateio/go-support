@@ -98,3 +98,18 @@ func (e *ValueEntityTckModelEntityTwo) HandleCommand(ctx *value.Context, name st
 func (e *ValueEntityTckModelEntityTwo) HandleState(ctx *value.Context, state *any.Any) error {
 	return nil
 }
+
+type ValueEntityConfiguredEntity string
+
+func NewValueEntityConfiguredEntity(id value.EntityID) value.EntityHandler {
+	r := ValueEntityConfiguredEntity("state")
+	return &r
+}
+
+func (v *ValueEntityConfiguredEntity) HandleCommand(ctx *value.Context, name string, msg proto.Message) (*any.Any, error) {
+	return encoding.MarshalAny(&Response{})
+}
+
+func (v *ValueEntityConfiguredEntity) HandleState(ctx *value.Context, state *any.Any) error {
+	return nil
+}

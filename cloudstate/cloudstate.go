@@ -61,7 +61,8 @@ func New(c protocol.Config) (*CloudState, error) {
 }
 
 // RegisterEventSourced registers an event sourced entity.
-func (cs *CloudState) RegisterEventSourced(entity *eventsourced.Entity, config protocol.DescriptorConfig) error {
+func (cs *CloudState) RegisterEventSourced(entity *eventsourced.Entity, config protocol.DescriptorConfig, options ...eventsourced.Option) error {
+	entity.Options(options...)
 	if err := cs.eventSourcedServer.Register(entity); err != nil {
 		return err
 	}
@@ -72,7 +73,8 @@ func (cs *CloudState) RegisterEventSourced(entity *eventsourced.Entity, config p
 }
 
 // RegisterCRDT registers a CRDT entity.
-func (cs *CloudState) RegisterCRDT(entity *crdt.Entity, config protocol.DescriptorConfig) error {
+func (cs *CloudState) RegisterCRDT(entity *crdt.Entity, config protocol.DescriptorConfig, options ...crdt.Option) error {
+	entity.Options(options...)
 	if err := cs.crdtServer.Register(entity); err != nil {
 		return err
 	}
@@ -94,7 +96,8 @@ func (cs *CloudState) RegisterAction(entity *action.Entity, config protocol.Desc
 }
 
 // RegisterValueEntity registers a Value entity.
-func (cs *CloudState) RegisterValueEntity(entity *value.Entity, config protocol.DescriptorConfig) error {
+func (cs *CloudState) RegisterValueEntity(entity *value.Entity, config protocol.DescriptorConfig, options ...value.Option) error {
+	entity.Options(options...)
 	if err := cs.valueServer.Register(entity); err != nil {
 		return err
 	}

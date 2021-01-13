@@ -127,11 +127,15 @@ func (s *EntityDiscoveryServer) RegisterEventSourcedEntity(entity *eventsourced.
 	if err := s.resolveFileDescriptors(config); err != nil {
 		return fmt.Errorf("failed to resolve FileDescriptor for DescriptorConfig: %+v: %w", config, err)
 	}
-	s.entitySpec.Entities = append(s.entitySpec.Entities, &protocol.Entity{
+	e := &protocol.Entity{
 		EntityType:    protocol.EventSourced,
 		ServiceName:   entity.ServiceName.String(),
 		PersistenceId: entity.PersistenceID,
-	})
+	}
+	if entity.PassivationStrategy.Strategy != nil {
+		e.PassivationStrategy = &entity.PassivationStrategy
+	}
+	s.entitySpec.Entities = append(s.entitySpec.Entities, e)
 	return s.updateSpec()
 }
 
@@ -141,12 +145,16 @@ func (s *EntityDiscoveryServer) RegisterCRDTEntity(entity *crdt.Entity, config p
 	if err := s.resolveFileDescriptors(config); err != nil {
 		return fmt.Errorf("failed to resolveFileDescriptor for DescriptorConfig: %+v: %w", config, err)
 	}
-	s.entitySpec.Entities = append(s.entitySpec.Entities, &protocol.Entity{
-		EntityType:    protocol.CRDT,
-		ServiceName:   entity.ServiceName.String(),
-		PersistenceId: entity.ServiceName.String(), // make sure CRDT entities have unique keys per service
-
-	})
+	e := &protocol.Entity{
+		EntityType:  protocol.CRDT,
+		ServiceName: entity.ServiceName.String(),
+		// TODO: as per https://github.com/cloudstateio/go-support/pull/67#issuecomment-749838999 this is temporary.
+		PersistenceId: entity.ServiceName.String(), // make sure CRDT entities have unique keys per service.
+	}
+	if entity.PassivationStrategy.GetStrategy() != nil {
+		e.PassivationStrategy = &entity.PassivationStrategy
+	}
+	s.entitySpec.Entities = append(s.entitySpec.Entities, e)
 	return s.updateSpec()
 }
 
@@ -169,11 +177,15 @@ func (s *EntityDiscoveryServer) RegisterValueEntity(entity *value.Entity, config
 	if err := s.resolveFileDescriptors(config); err != nil {
 		return fmt.Errorf("failed to resolveFileDescriptor for DescriptorConfig: %+v: %w", config, err)
 	}
-	s.entitySpec.Entities = append(s.entitySpec.Entities, &protocol.Entity{
+	e := &protocol.Entity{
 		EntityType:    protocol.Value,
 		ServiceName:   entity.ServiceName.String(),
 		PersistenceId: entity.PersistenceID,
-	})
+	}
+	if entity.PassivationStrategy.GetStrategy() != nil {
+		e.PassivationStrategy = &entity.PassivationStrategy
+	}
+	s.entitySpec.Entities = append(s.entitySpec.Entities, e)
 	return s.updateSpec()
 }
 
