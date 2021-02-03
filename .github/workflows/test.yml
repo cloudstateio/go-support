@@ -19,12 +19,11 @@ jobs:
         uses: actions/checkout@v2
       - name: Test
         run: |
-          echo "Body:"
           #echo ${{ github.event.pull_request.body }}
           #echo ${{ github.event.pull_request.issue_url }}
           # | cut -d: -f 2 |
-          export TCK_SKIP=`echo ${{ github.event.pull_request.body }} | grep ^/tck-skip | paste -sd ","`
-          export TCK_RUN=`echo ${{ github.event.pull_request.body }} | grep ^/tck-run | paste -sd ","`
+          export TCK_SKIP=`echo "${{ github.event.pull_request.body }}" | grep ^/tck-skip | paste -sd ","`
+          export TCK_RUN=`echo "${{ github.event.pull_request.body }}" | grep ^/tck-run | paste -sd ","`
           echo $TCK_SKIP
           echo $TCK_RUN
           go test ./...
