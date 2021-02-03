@@ -26,7 +26,6 @@ jobs:
           echo $BODY
           export TCK_SKIP=`echo $BODY | grep ^/tck-skip | paste -sd ","`
           export TCK_RUN=`echo $BODY | grep ^/tck-run | paste -sd ","`
-#          export TCK_RUN=`echo "${{ github.event.pull_request.body }}" | grep ^/tck-run | paste -sd ","`
           echo $TCK_SKIP
           echo $TCK_RUN
           go test ./...
