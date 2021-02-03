@@ -19,9 +19,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Test
         run: |
-          #echo ${{ github.event.pull_request.body }}
-          #echo ${{ github.event.pull_request.issue_url }}
-          #| cut -d: -f 2 |
           BODY=$(jq --raw-output .body "${{ fromJson(github.event.pull_request) }}")
           echo $BODY
           export TCK_SKIP=`echo $BODY | grep ^/tck-skip | paste -sd ","`
